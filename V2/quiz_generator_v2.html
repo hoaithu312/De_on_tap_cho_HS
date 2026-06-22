@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hệ thống Ôn tập Thông minh AI - Smart Quiz Generator</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- Mammoth.js (Word files parsing) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            },
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
+      background-attachment: fixed;
+      color: #0f172a;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* Premium Glassmorphism Panels */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 40px -10px rgba(16, 185, 129, 0.15), inset 0 2px 20px rgba(255, 255, 255, 0.8);
+      border-radius: 1.25rem;
+      position: relative;
+    }
+    
+    /* Interactive Glass Cards */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 15px -5px rgba(16, 185, 129, 0.1), inset 0 1px 10px rgba(255, 255, 255, 0.6);
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .glass-card:hover {
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 15px 30px -10px rgba(16, 185, 129, 0.25), inset 0 2px 15px rgba(255, 255, 255, 0.9);
+      border-color: rgba(52, 211, 153, 0.5);
+    }
+    
+    /* Glossy Shiny Text */
+    .text-glossy {
+      background: linear-gradient(135deg, #059669 0%, #34d399 50%, #059669 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0px 4px 12px rgba(16, 185, 129, 0.3);
+      animation: shine 4s linear infinite;
+    }
+    @keyframes shine {
+      to { background-position: 200% center; }
+    }
+    
+    /* Hyper-smooth Glossy Button */
+    .btn-glossy {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 8px 20px -5px rgba(16, 185, 129, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.4), inset 0 -2px 5px rgba(0, 0, 0, 0.1);
+      border: 1px solid #047857;
+      color: white !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      font-weight: 800;
+    }
+    .btn-glossy::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+      transform: skewX(-25deg);
+      transition: 0.5s;
+    }
+    .btn-glossy:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px -5px rgba(16, 185, 129, 0.7), inset 0 2px 2px rgba(255, 255, 255, 0.5);
+    }
+    .btn-glossy:hover:not(:disabled)::after {
+      left: 150%;
+    }
+    .btn-glossy:disabled {
+      opacity: 0.6;
+      filter: grayscale(80%);
+      cursor: not-allowed;
+    }
+
+    /* Custom Input Range */
+    input[type="range"] {
+      accent-color: #10b981;
+    }
+
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(236, 253, 245, 0.8);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(to bottom, #6ee7b7, #10b981);
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(to bottom, #34d399, #059669);
+    }
+
+    /* Pulsing animations */
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.05); }
+    }
+    .pulse-urgent {
+      animation: pulse-red 1s infinite;
+      color: #ef4444 !important;
+      text-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col relative text-slate-800">
+
+  <div id="app" class="flex flex-col flex-1" v-cloak>
+    
+    <!-- Toast Notification -->
+    <div class="fixed top-5 right-5 z-50 flex flex-col gap-2 max-w-md">
+      <div v-for="toast in toasts" :key="toast.id" 
+           :class="['px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 transition-all duration-300 transform translate-y-0 border backdrop-blur-md', 
+                    toast.type === 'success' ? 'bg-green-50/90 border-green-200 text-green-800 shadow-green-500/10' : 
+                    toast.type === 'error' ? 'bg-red-50/90 border-red-200 text-red-800 shadow-red-500/10' : 'bg-brand-50/90 border-brand-200 text-brand-800 shadow-brand-500/10']">
+        <i :class="['fas text-lg', toast.type === 'success' ? 'fa-circle-check text-green-500' : 
+                                  toast.type === 'error' ? 'fa-triangle-exclamation text-red-500' : 'fa-circle-info text-brand-500']"></i>
+        <span class="text-sm font-bold">{{ toast.message }}</span>
+        <button @click="removeToast(toast.id)" class="ml-auto text-slate-400 hover:text-slate-700 transition">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="glass-panel rounded-none border-t-0 border-x-0 sticky top-0 z-40 px-6 py-4 shadow-sm shadow-brand-500/5">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer group" @click="changeView('dashboard')">
+          <div class="w-12 h-12 bg-gradient-to-br from-brand-400 to-brand-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-brand-500/30 border border-brand-300 group-hover:scale-105 transition-transform duration-300">
+            <i class="fas fa-cube text-3xl"></i>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-2xl text-glossy tracking-tight">Smart Quiz Builder</h1>
+          </div>
+        </div>
+
+        <nav class="flex items-center gap-4">
+          <button @click="changeView('dashboard')" :class="['px-4 py-2 text-sm font-bold rounded-xl transition shadow-sm border border-transparent', currentView === 'dashboard' ? 'bg-white shadow-brand-500/10 border-brand-100 text-brand-700' : 'text-slate-600 hover:bg-white hover:border-slate-200']">
+            <i class="fas fa-home mr-2"></i>Trang chủ
+          </button>
+          <button @click="changeView('history')" :class="['px-4 py-2 text-sm font-bold rounded-xl transition shadow-sm border border-transparent', currentView === 'history' ? 'bg-white shadow-brand-500/10 border-brand-100 text-brand-700' : 'text-slate-600 hover:bg-white hover:border-slate-200']">
+            <i class="fas fa-history mr-2"></i>Lịch sử ôn tập
+          </button>
+          <button @click="showSettings = true" class="px-4 py-2 text-sm font-bold text-slate-600 hover:text-brand-700 rounded-xl hover:bg-white hover:border-slate-200 border border-transparent transition shadow-sm flex items-center">
+            <i class="fas fa-cog mr-2"></i>Cấu hình AI
+            <span v-if="!hasApiKey" class="inline-block w-2 h-2 bg-red-500 rounded-full ml-2 animate-ping"></span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 flex flex-col gap-6 relative z-10">
+      
+      <!-- WARNING IF NO API KEY -->
+      <div v-if="!hasApiKey" class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-4 rounded-2xl flex items-center justify-between gap-4 shadow-md">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 border border-amber-200 shadow-inner">
+            <i class="fas fa-triangle-exclamation text-xl animate-bounce"></i>
+          </div>
+          <div>
+            <h4 class="font-extrabold text-amber-900 text-base">Chưa cấu hình API Key</h4>
+            <p class="text-sm font-medium text-amber-700">Bạn cần cài đặt API Key (Gemini hoặc OpenAI) để AI có thể phân tích tài liệu và sinh đề thi.</p>
+          </div>
+        </div>
+        <button @click="showSettings = true" class="bg-gradient-to-b from-amber-400 to-amber-500 hover:to-amber-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-amber-500/30 transition border border-amber-400 whitespace-nowrap">
+          Cài đặt ngay <i class="fas fa-arrow-right ml-1"></i>
+        </button>
+      </div>
+
+      <!-- VIEW: DASHBOARD (UPLOAD & CONFIG) -->
+      <div v-if="currentView === 'dashboard'" class="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
+        
+        <!-- Document Upload & Input Module (Lefthand Side - 7 Cols) -->
+        <div class="lg:col-span-7 flex flex-col gap-6">
+          <div class="glass-panel p-8 flex flex-col gap-5 flex-1">
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-xl font-black flex items-center gap-3 text-slate-800">
+                <span class="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center"><i class="fas fa-file-invoice"></i></span>
+                1. Tài liệu
+              </h2>
+              <span class="bg-white px-3 py-1 rounded-full text-xs font-bold text-slate-500 border border-slate-200 shadow-sm">PDF, Word, TXT</span>
+            </div>
+
+            <!-- Upload Zone -->
+            <div @dragover.prevent="dragOver = true" 
+                 @dragleave.prevent="dragOver = false" 
+                 @drop.prevent="handleFileDrop"
+                 :class="['border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-300 flex flex-col items-center justify-center gap-4 cursor-pointer relative overflow-hidden',
+                          dragOver ? 'border-brand-500 bg-brand-50/80 shadow-inner' : 'border-slate-300 bg-white/50 hover:border-brand-400 hover:bg-white']"
+                 @click="$refs.fileInput.click()">
+              <input type="file" ref="fileInput" class="hidden" accept=".pdf,.txt,.docx" @change="handleFileSelect">
+              <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-brand-500 shadow-md border border-brand-50 transition-transform group-hover:scale-110">
+                <i class="fas fa-cloud-arrow-up text-3xl" :class="{'text-brand-600 animate-bounce': dragOver}"></i>
+              </div>
+              <div>
+                <p class="font-extrabold text-slate-700 text-lg">Kéo thả tài liệu vào đây</p>
+                <p class="text-sm font-semibold text-slate-500 mt-1">Hoặc click để chọn file từ máy tính</p>
+              </div>
+              <div v-if="fileLoading" class="w-full max-w-xs mt-4 bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
+                <div class="bg-gradient-to-r from-brand-400 to-brand-600 h-2 rounded-full animate-pulse" style="width: 100%"></div>
+              </div>
+            </div>
+
+            <!-- File Info Panel -->
+            <div v-if="selectedFileName" class="bg-gradient-to-r from-brand-50 to-white border border-brand-200 rounded-xl p-4 flex items-center justify-between gap-3 shadow-sm overflow-hidden">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <i class="fas fa-file-circle-check text-brand-500 text-2xl drop-shadow-sm flex-shrink-0"></i>
+                <span class="text-xs font-bold text-slate-800 truncate">{{ selectedFileName }}</span>
+              </div>
+              <button @click="clearFile" class="flex-shrink-0 flex items-center gap-1.5 whitespace-nowrap text-[11px] bg-white text-red-500 border border-red-100 hover:bg-red-50 hover:text-red-600 font-bold px-3 py-1.5 rounded-lg shadow-sm transition">
+                Gỡ bỏ <i class="fas fa-trash-can"></i>
+              </button>
+            </div>
+
+            <!-- Text Input alternative -->
+            <div class="flex flex-col gap-2 flex-1 min-h-[220px] relative">
+              <div class="absolute -left-3 top-1/2 -translate-y-1/2 w-0.5 h-1/2 bg-slate-200"></div>
+              <label class="text-sm font-extrabold text-slate-700 flex items-center gap-2">
+                <span class="text-brand-500 text-xs">hoặc</span> Nhập văn bản trực tiếp
+              </label>
+              <textarea v-model="inputText" 
+                        class="flex-1 w-full p-5 rounded-2xl bg-white/80 backdrop-blur-sm border border-slate-200 shadow-inner focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 text-sm resize-none transition text-slate-800 font-medium leading-relaxed"
+                        placeholder="Hãy nhập nội dung bài học, câu hỏi ôn tập... AI sẽ tự động đọc hiểu và thiết kế câu hỏi xung quanh nội dung này"></textarea>
+              <div class="flex items-center justify-between text-xs font-bold text-slate-500 mt-1">
+                <span :class="inputText.length > 50 ? 'text-brand-600' : ''">Số ký tự: {{ inputText.length }} / 50 tối thiểu</span>
+                <button v-if="inputText.length > 0" @click="inputText = ''" class="text-red-400 hover:text-red-600 transition">Xóa sạch văn bản</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quiz Configurations (Righthand Side - 5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+          <div class="glass-panel p-8 flex flex-col gap-6 justify-between h-full">
+            <div class="flex flex-col gap-5">
+              <div class="flex items-center justify-between mb-2">
+                <h2 class="text-xl font-black flex items-center gap-3 text-slate-800">
+                  <span class="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center"><i class="fas fa-sliders"></i></span>
+                  2. Thiết Lập Đề Thi
+                </h2>
+              </div>
+
+              <!-- Subject Input -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-bold text-slate-700">Môn học:</label>
+                <div class="relative">
+                  <select v-model="config.subject" class="w-full bg-white border border-slate-200 text-slate-800 py-3 px-4 rounded-xl shadow-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition text-sm font-bold appearance-none cursor-pointer">
+                    <option value="Tự động phát hiện">✨ Tự động nhận diện (Khuyên dùng)</option>
+                    <option value="Toán học">Toán học</option>
+                    <option value="Vật lý">Vật lý</option>
+                    <option value="Hóa học">Hóa học</option>
+                    <option value="Sinh học">Sinh học</option>
+                    <option value="Ngữ văn">Ngữ văn</option>
+                    <option value="Tiếng Anh">Tiếng Anh</option>
+                    <option value="Lịch sử">Lịch sử</option>
+                    <option value="Địa lý">Địa lý</option>
+                    <option value="Khác">Môn học khác</option>
+                  </select>
+                  <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                </div>
+              </div>
+
+              <!-- Quiz Type Select -->
+              <div class="flex flex-col gap-2">
+                <label class="text-sm font-bold text-slate-700">Hình thức kiểm tra:</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <button @click="config.type = 'multiple_choice'" 
+                          :class="['py-3 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center gap-2 shadow-sm',
+                                   config.type === 'multiple_choice' ? 'bg-brand-50 border-brand-400 text-brand-700 ring-2 ring-brand-500/20 shadow-brand-500/10' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700']">
+                    <i class="fas fa-list-check text-xl"></i>Trắc nghiệm
+                  </button>
+                  <button @click="config.type = 'essay'" 
+                          :class="['py-3 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center gap-2 shadow-sm',
+                                   config.type === 'essay' ? 'bg-brand-50 border-brand-400 text-brand-700 ring-2 ring-brand-500/20 shadow-brand-500/10' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700']">
+                    <i class="fas fa-file-pen text-xl"></i>Tự luận
+                  </button>
+                  <button @click="config.type = 'hybrid'" 
+                          :class="['py-3 px-2 text-xs font-bold rounded-xl border transition-all flex flex-col items-center gap-2 shadow-sm',
+                                   config.type === 'hybrid' ? 'bg-brand-50 border-brand-400 text-brand-700 ring-2 ring-brand-500/20 shadow-brand-500/10' : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700']">
+                    <i class="fas fa-shuffle text-xl"></i>Kết hợp
+                  </button>
+                </div>
+              </div>
+
+              <!-- Question Count Range Slider -->
+              <div class="flex flex-col gap-2 mt-2">
+                <div class="flex items-center justify-between text-sm">
+                  <label class="font-bold text-slate-700">Số lượng câu hỏi:</label>
+                  <span class="font-black text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md border border-brand-100 shadow-inner">{{ config.questionCount }} câu</span>
+                </div>
+                <input type="range" min="3" max="20" step="1" v-model.number="config.questionCount" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer mt-1">
+              </div>
+
+              <!-- Time Limit Range Slider -->
+              <div class="flex flex-col gap-2 mt-2">
+                <div class="flex items-center justify-between text-sm">
+                  <label class="font-bold text-slate-700">Thời lượng làm bài:</label>
+                  <span class="font-black text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md border border-brand-100 shadow-inner">{{ config.duration }} phút</span>
+                </div>
+                <input type="range" min="5" max="90" step="5" v-model.number="config.duration" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer mt-1">
+              </div>
+            </div>
+
+            <!-- Generate CTA -->
+            <div class="pt-6 border-t border-slate-200/60 mt-auto">
+              <button @click="generateQuiz" 
+                      :disabled="isGenerating || (!selectedFileName && inputText.trim().length < 50)" 
+                      class="w-full btn-glossy py-4 px-4 rounded-xl flex items-center justify-center gap-3 text-lg">
+                <span v-if="isGenerating" class="flex items-center justify-center">
+                  <i class="fas fa-atom fa-spin mr-3 text-xl"></i> {{ generatingStatus }}
+                </span>
+                <span v-else class="flex items-center justify-center">
+                  <i class="fas fa-wand-magic-sparkles mr-2 text-xl"></i> Khởi tạo Đề thi AI
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- VIEW: ACTIVE QUIZ PLAY SESSION -->
+      <div v-if="currentView === 'quiz_session'" class="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
+        
+        <!-- Questions panel (Left - 8 cols) -->
+        <div class="lg:col-span-8 flex flex-col gap-4">
+          <div class="glass-panel p-8 flex flex-col flex-1 relative min-h-[500px]">
+            
+            <!-- Question header -->
+            <div class="flex items-center justify-between border-b border-slate-200/60 pb-4 mb-6">
+              <div class="flex items-center gap-3">
+                <span class="bg-gradient-to-r from-brand-500 to-brand-600 text-white font-black text-sm px-3.5 py-1.5 rounded-lg shadow-md shadow-brand-500/20">
+                  Câu hỏi {{ activeQuestionIndex + 1 }} / {{ activeQuiz.questions.length }}
+                </span>
+                <span class="text-xs text-slate-500 uppercase font-extrabold tracking-wider bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                  <i class="fas mr-1.5" :class="activeQuestion.question_type === 'multiple_choice' ? 'fa-list-check text-brand-500' : 'fa-file-pen text-brand-500'"></i>
+                  {{ activeQuestion.question_type === 'multiple_choice' ? 'Trắc nghiệm' : 'Tự luận' }}
+                </span>
+              </div>
+
+              <!-- Attempt limit details -->
+              <div class="text-xs font-bold text-right bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 shadow-inner">
+                <span v-if="activeQuestion.question_type === 'multiple_choice'">
+                  Lượt check: 
+                  <strong :class="getAttemptCount(activeQuestion.id) >= 2 ? 'text-red-500' : 'text-brand-600'">
+                    {{ getAttemptCount(activeQuestion.id) }}/2
+                  </strong>
+                </span>
+                <span v-else>
+                  Bản nháp đã nộp: 
+                  <strong :class="getAttemptCount(activeQuestion.id) >= 3 ? 'text-red-500' : 'text-brand-600'">
+                    {{ getAttemptCount(activeQuestion.id) }}/3
+                  </strong>
+                </span>
+              </div>
+            </div>
+
+            <!-- Question Body -->
+            <div class="flex-1 flex flex-col gap-8">
+              <p class="font-extrabold text-xl leading-relaxed text-slate-800 tracking-tight">{{ activeQuestion.question_text }}</p>
+
+              <!-- UI for Multiple Choice -->
+              <div v-if="activeQuestion.question_type === 'multiple_choice'" class="flex flex-col gap-3.5">
+                <div v-for="(text, optKey) in activeQuestion.options" :key="optKey"
+                     @click="selectOption(activeQuestion.id, optKey)"
+                     :class="['p-5 rounded-xl border-2 cursor-pointer transition-all duration-300 flex items-center gap-4 shadow-sm relative overflow-hidden',
+                              getSelectedOption(activeQuestion.id) === optKey ? 'bg-brand-50/80 border-brand-500 ring-4 ring-brand-500/10' : 'bg-white border-slate-100 hover:border-brand-300 hover:shadow-md hover:-translate-y-0.5',
+                              isQuestionLocked(activeQuestion.id) ? 'opacity-70 pointer-events-none' : '']">
+                  
+                  <div v-if="getSelectedOption(activeQuestion.id) === optKey" class="absolute left-0 top-0 bottom-0 w-1.5 bg-brand-500"></div>
+                  
+                  <span :class="['w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border-2 shadow-sm transition-all',
+                                 getSelectedOption(activeQuestion.id) === optKey ? 'bg-brand-500 border-brand-500 text-white shadow-brand-500/30' : 'bg-slate-50 border-slate-200 text-slate-500']">
+                    {{ optKey }}
+                  </span>
+                  <span :class="['font-semibold text-base flex-1', getSelectedOption(activeQuestion.id) === optKey ? 'text-brand-900' : 'text-slate-700']">{{ text }}</span>
+                  <i v-if="getSelectedOption(activeQuestion.id) === optKey" class="fas fa-circle-check text-brand-500 text-2xl ml-2 drop-shadow-sm"></i>
+                </div>
+
+                <!-- Instant Check Answer for Multiple Choice -->
+                <div class="mt-6 flex items-center gap-4">
+                  <button @click="checkMultipleChoiceAnswer(activeQuestion.id)"
+                          :disabled="isQuestionLocked(activeQuestion.id) || !getSelectedOption(activeQuestion.id)"
+                          class="btn-glossy px-6 py-3.5 rounded-xl text-sm font-bold shadow-md flex items-center gap-2">
+                    <i class="fas fa-shield-check text-lg"></i> Kiểm tra đáp án (Còn {{ 2 - getAttemptCount(activeQuestion.id) }})
+                  </button>
+                  <span v-if="getQuestionFeedback(activeQuestion.id)" 
+                        :class="['text-sm font-bold flex items-center gap-2 px-4 py-2 rounded-lg border',
+                                 getQuestionFeedback(activeQuestion.id).correct ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700']">
+                    <i class="fas" :class="getQuestionFeedback(activeQuestion.id).correct ? 'fa-circle-check text-lg' : 'fa-circle-xmark text-lg'"></i>
+                    {{ getQuestionFeedback(activeQuestion.id).message }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- UI for Essay -->
+              <div v-if="activeQuestion.question_type === 'essay'" class="flex flex-col gap-5 flex-1">
+                <textarea v-model="sessionAnswers[activeQuestion.id].draftText" 
+                          :disabled="isQuestionLocked(activeQuestion.id)"
+                          class="w-full p-5 rounded-2xl bg-white/80 border-2 border-slate-200 shadow-inner focus:outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 text-base flex-1 min-h-[200px] resize-none text-slate-800 font-medium disabled:opacity-60 disabled:bg-slate-50 transition-all"
+                          placeholder="Viết câu trả lời tự luận chi tiết của bạn tại đây... AI sẽ chấm điểm dựa trên độ chính xác và tính toàn diện của câu trả lời."></textarea>
+                
+                <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm">
+                  <button @click="submitEssayDraft(activeQuestion.id)"
+                          :disabled="isQuestionLocked(activeQuestion.id) || !sessionAnswers[activeQuestion.id].draftText.trim()"
+                          class="btn-glossy px-6 py-3 rounded-xl text-sm font-bold shadow-md flex items-center gap-2">
+                    <i class="fas fa-paper-plane"></i>Lưu & Nộp nháp (Còn {{ 3 - getAttemptCount(activeQuestion.id) }})
+                  </button>
+                  <span class="text-xs font-bold text-brand-700 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-200">
+                    <i class="fas fa-robot mr-1.5"></i>AI sẽ chấm điểm trên bản nộp cuối cùng
+                  </span>
+                </div>
+
+                <!-- Drafts History Table -->
+                <div v-if="sessionAnswers[activeQuestion.id].history.length > 0" class="mt-2 flex flex-col gap-3">
+                  <h4 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <i class="fas fa-clock-rotate-left"></i> Lịch sử nháp đã nộp
+                  </h4>
+                  <div class="flex flex-col gap-2.5 max-h-40 overflow-y-auto pr-2">
+                    <div v-for="(hist, idx) in sessionAnswers[activeQuestion.id].history" :key="idx" 
+                         class="bg-white border border-slate-200 rounded-xl p-4 text-sm flex flex-col gap-2 shadow-sm">
+                      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                        <span class="font-black text-brand-600">Lượt nộp {{ idx + 1 }}</span> 
+                        <span class="text-slate-400 font-bold text-xs bg-slate-50 px-2 py-1 rounded">{{ hist.timestamp }}</span>
+                      </div>
+                      <span class="text-slate-700 font-medium italic">"{{ hist.text }}"</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Navigation buttons at bottom -->
+            <div class="flex items-center justify-between pt-5 mt-auto border-t border-slate-200/60">
+              <button @click="prevQuestion" :disabled="activeQuestionIndex === 0" class="text-sm font-extrabold text-slate-600 disabled:opacity-30 transition-all px-5 py-3 bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 rounded-xl shadow-sm flex items-center">
+                <i class="fas fa-chevron-left mr-2 text-xs"></i> Câu trước
+              </button>
+              <button @click="nextQuestion" :disabled="activeQuestionIndex === activeQuiz.questions.length - 1" class="text-sm font-extrabold text-brand-700 disabled:opacity-30 transition-all px-5 py-3 bg-brand-50 border-2 border-brand-200 hover:bg-brand-100 hover:border-brand-300 rounded-xl shadow-sm flex items-center">
+                Câu sau <i class="fas fa-chevron-right ml-2 text-xs"></i>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Session Control Panel (Right - 4 cols) -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+          
+          <!-- Countdown Timer Panel -->
+          <div class="glass-panel p-6 flex flex-col items-center gap-4 relative overflow-hidden">
+            <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand-400 to-brand-600"></div>
+            
+            <div class="text-slate-500 font-black text-xs uppercase tracking-widest mt-2">Thời gian làm bài</div>
+            
+            <!-- Giant countdown circle representation -->
+            <div class="relative w-40 h-40 flex items-center justify-center my-2">
+              <div class="absolute inset-0 bg-white rounded-full shadow-inner border border-slate-100"></div>
+              <!-- SVG Ring background -->
+              <svg class="absolute inset-0 transform -rotate-90 z-10" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" stroke="#f1f5f9" stroke-width="6" fill="transparent"/>
+                <circle cx="50" cy="50" r="45" :stroke="timerPercent < 20 ? '#ef4444' : '#10b981'" stroke-width="6" stroke-linecap="round" fill="transparent"
+                        :stroke-dasharray="282.7" :stroke-dashoffset="282.7 * (1 - timerPercent / 100)" class="transition-all duration-1000 ease-linear"/>
+              </svg>
+              <!-- Inside Text -->
+              <div class="z-20 flex flex-col items-center justify-center">
+                <i class="fas fa-hourglass-half text-slate-300 text-sm mb-1"></i>
+                <div :class="['text-3xl font-black font-mono tracking-tight', timerSeconds < 60 ? 'pulse-urgent' : 'text-slate-800 text-glossy']">
+                  {{ formatTimer(timerSeconds) }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Entire Exam -->
+            <button @click="confirmSubmitQuiz" class="w-full btn-glossy py-4 px-4 rounded-xl flex items-center justify-center gap-2 mt-4 text-base shadow-brand-500/40">
+              <i class="fas fa-check-double text-lg"></i> Nộp toàn bộ bài thi
+            </button>
+          </div>
+
+          <!-- Question Bubble Navigation Grid -->
+          <div class="glass-panel p-6 flex flex-col gap-5">
+            <div class="text-sm font-black text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
+              <i class="fas fa-map-location-dot text-brand-500"></i> Bản đồ Câu hỏi
+            </div>
+            
+            <!-- Grid of bubbles -->
+            <div class="grid grid-cols-5 gap-3">
+              <button v-for="(question, index) in activeQuiz.questions" :key="index"
+                      @click="activeQuestionIndex = index"
+                      :class="['w-full aspect-square rounded-xl flex flex-col items-center justify-center font-bold text-sm transition-all shadow-sm border-2',
+                               activeQuestionIndex === index ? 'ring-4 ring-brand-500/20 scale-110 z-10' : 'hover:scale-105',
+                               getBubbleClass(question)]">
+                <span class="text-base">{{ index + 1 }}</span>
+                <span class="text-[9px] font-extrabold opacity-70 mt-0.5 tracking-tighter">{{ question.question_type === 'multiple_choice' ? 'MCQ' : 'ESSAY' }}</span>
+              </button>
+            </div>
+
+            <!-- Note/Legend -->
+            <div class="bg-slate-50 rounded-xl p-3 grid grid-cols-2 gap-2 text-[10px] font-bold text-slate-600 border border-slate-100 shadow-inner mt-2">
+              <div class="flex items-center gap-2"><span class="w-3 h-3 bg-white border-2 border-slate-300 rounded shadow-sm"></span>Chưa làm</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 bg-amber-50 border-2 border-amber-400 rounded shadow-sm"></span>Đang làm</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 bg-green-50 border-2 border-green-500 rounded shadow-sm"></span>Đã khóa/Đúng</div>
+              <div class="flex items-center gap-2"><span class="w-3 h-3 bg-red-50 border-2 border-red-400 rounded shadow-sm"></span>Hết lượt/Sai</div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- VIEW: GRADING & ANALYTICS REPORT -->
+      <div v-if="currentView === 'grading_report'" class="flex flex-col gap-8 relative z-10">
+        
+        <!-- Diagnostic Summary Header Card -->
+        <div class="glass-panel p-8 bg-gradient-to-br from-white via-brand-50/30 to-brand-100/30 flex flex-col md:flex-row items-center justify-between gap-8 border-brand-200">
+          <div class="flex items-center gap-8">
+            <!-- Score Radial Gauge SVG -->
+            <div class="relative w-36 h-36 flex items-center justify-center bg-white rounded-full shadow-lg border border-brand-100">
+              <svg class="absolute inset-0 transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="44" stroke="#f1f5f9" stroke-width="8" fill="transparent"/>
+                <circle cx="50" cy="50" r="44" stroke="#10b981" stroke-width="8" fill="transparent"
+                        :stroke-dasharray="276.46" :stroke-dashoffset="276.46 * (1 - (gradingResult.score / 10))" stroke-linecap="round"/>
+              </svg>
+              <div class="text-center z-10 flex flex-col items-center">
+                <div class="text-5xl font-black text-glossy">{{ formatScore(gradingResult.score) }}</div>
+                <div class="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1">Điểm số</div>
+              </div>
+            </div>
+            
+            <div class="flex flex-col gap-2 text-center md:text-left">
+              <div class="inline-block bg-brand-100 text-brand-700 font-black text-xs px-3 py-1 rounded-full w-fit mb-1 shadow-sm border border-brand-200">Báo cáo Kết quả AI</div>
+              <h2 class="text-3xl font-black text-slate-800 tracking-tight">{{ activeQuiz.title }}</h2>
+              <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-3 text-xs font-bold text-slate-600">
+                <span class="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm"><i class="fas fa-book mr-2 text-brand-500"></i>{{ activeQuiz.subject }}</span>
+                <span class="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm"><i class="fas fa-clock mr-2 text-brand-500"></i>{{ formatDuration(gradingResult.timeSpentSeconds) }}</span>
+                <span class="bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm"><i class="fas fa-calendar-alt mr-2 text-brand-500"></i>{{ formatDate(gradingResult.submittedAt) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <button @click="restartQuiz" class="w-full sm:w-auto btn-glossy px-8 py-4 rounded-xl text-sm flex items-center justify-center gap-2">
+              <i class="fas fa-rotate-right text-lg"></i> Làm lại đề này
+            </button>
+            <button @click="changeView('dashboard')" class="w-full sm:w-auto bg-white border-2 border-slate-200 hover:border-brand-300 hover:bg-brand-50 text-slate-700 px-8 py-4 rounded-xl text-sm font-black shadow-sm transition-all flex items-center justify-center gap-2">
+              <i class="fas fa-home text-lg"></i> Trang chủ
+            </button>
+          </div>
+        </div>
+
+        <!-- STATS GRID -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div class="glass-card p-6 rounded-2xl text-center flex flex-col gap-2 justify-center">
+            <span class="text-[11px] text-slate-500 font-black uppercase tracking-widest">Tổng câu hỏi</span>
+            <span class="text-4xl font-black text-slate-800">{{ activeQuiz.questions.length }}</span>
+          </div>
+          <div class="glass-card p-6 rounded-2xl text-center flex flex-col gap-2 justify-center">
+            <span class="text-[11px] text-slate-500 font-black uppercase tracking-widest">Trắc nghiệm</span>
+            <span class="text-4xl font-black text-emerald-500 drop-shadow-sm">
+              {{ countCorrectMultipleChoice() }}<span class="text-2xl text-slate-300 mx-1">/</span>{{ countMultipleChoice() }}
+            </span>
+          </div>
+          <div class="glass-card p-6 rounded-2xl text-center flex flex-col gap-2 justify-center">
+            <span class="text-[11px] text-slate-500 font-black uppercase tracking-widest">Điểm Tự luận</span>
+            <span class="text-4xl font-black text-brand-500 drop-shadow-sm">
+              {{ sumEssayScore() }}<span class="text-xl text-slate-400 font-bold ml-1">/ {{ maxEssayScore() }}</span>
+            </span>
+          </div>
+          <div class="glass-card p-6 rounded-2xl text-center flex flex-col gap-2 justify-center relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-gradient-to-br" :class="getRatingGradient(gradingResult.score)"></div>
+            <span class="text-[11px] text-slate-500 font-black uppercase tracking-widest relative z-10">Đánh giá AI</span>
+            <span class="text-xl mt-2 font-black px-4 py-2 rounded-xl border-2 w-max mx-auto shadow-sm relative z-10" :class="getRatingClass(gradingResult.score)">
+              {{ getRatingText(gradingResult.score) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- DETAILS REPORT -->
+        <div class="flex flex-col gap-6 mt-4">
+          <h3 class="font-black text-2xl flex items-center gap-3 text-slate-800">
+            <div class="w-10 h-10 bg-brand-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-brand-500/30">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            Chi tiết lời giải và đánh giá
+          </h3>
+
+          <div v-for="(question, index) in activeQuiz.questions" :key="question.id" class="glass-panel p-8 flex flex-col gap-6">
+            <!-- Question header badge -->
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-100 pb-4 gap-4">
+              <div class="flex items-center gap-3">
+                <span class="font-black text-sm text-brand-700 bg-brand-100 px-4 py-1.5 rounded-lg border border-brand-200">Câu hỏi {{ index + 1 }}</span>
+                <span class="text-slate-400 font-black text-xs uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                  {{ question.question_type === 'multiple_choice' ? 'Trắc nghiệm' : 'Tự luận' }}
+                </span>
+              </div>
+                
+              <!-- Score badge -->
+              <div :class="['font-black text-sm px-4 py-1.5 rounded-xl border-2 shadow-sm flex items-center gap-2', 
+                            getQuestionScore(question.id) === question.max_score ? 'bg-green-50 border-green-400 text-green-700' : 
+                            getQuestionScore(question.id) > 0 ? 'bg-amber-50 border-amber-400 text-amber-700' : 'bg-red-50 border-red-300 text-red-600']">
+                <i class="fas fa-star text-xs"></i> Điểm: {{ getQuestionScore(question.id) }} / {{ question.max_score }}
+              </div>
+            </div>
+
+            <!-- Question Text -->
+            <p class="font-extrabold text-lg text-slate-800">{{ question.question_text }}</p>
+
+            <!-- Grading details for Multiple Choice -->
+            <div v-if="question.question_type === 'multiple_choice'" class="flex flex-col gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div v-for="(optText, optKey) in question.options" :key="optKey"
+                     :class="['p-4 rounded-xl border-2 text-sm flex items-center gap-4 transition-all shadow-sm',
+                              optKey === question.correct_answer ? 'bg-green-50/80 border-green-400 text-green-900 shadow-green-500/10' : 
+                              getSelectedOptionInReport(question.id) === optKey ? 'bg-red-50/80 border-red-400 text-red-900 shadow-red-500/10' : 'bg-white border-slate-100 text-slate-500 opacity-60']">
+                  <span :class="['w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs border-2 shadow-sm',
+                                 optKey === question.correct_answer ? 'bg-green-500 border-green-600 text-white' : 
+                                 getSelectedOptionInReport(question.id) === optKey ? 'bg-red-500 border-red-600 text-white' : 'bg-slate-50 border-slate-200']">
+                    {{ optKey }}
+                  </span>
+                  <span class="flex-1 font-bold">{{ optText }}</span>
+                  <i v-if="optKey === question.correct_answer" class="fas fa-check-circle text-green-500 text-xl"></i>
+                  <i v-else-if="getSelectedOptionInReport(question.id) === optKey" class="fas fa-times-circle text-red-500 text-xl"></i>
+                </div>
+              </div>
+              
+              <!-- Attempts history log -->
+              <div class="mt-2 text-xs font-bold text-slate-600 bg-white p-3 rounded-xl border border-slate-200 inline-block w-fit shadow-sm">
+                <i class="fas fa-clock-rotate-left mr-2 text-brand-500"></i> Lịch sử lựa chọn: 
+                <span v-for="(attempt, aIdx) in gradingResult.details[question.id]?.answers_history || []" :key="aIdx" 
+                      :class="['mx-2 px-2 py-1 rounded bg-slate-50 border', attempt.correct ? 'text-green-600 border-green-200' : 'text-red-500 border-red-200']">
+                  Lần {{ aIdx + 1 }}: {{ attempt.selected }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Grading details for Essay -->
+            <div v-if="question.question_type === 'essay'" class="flex flex-col gap-6">
+              <!-- Student's Final Response -->
+              <div class="bg-white border-2 border-slate-100 shadow-sm rounded-2xl p-6 relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-slate-300"></div>
+                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center"><i class="fas fa-user-edit mr-2"></i> Bài nộp của học sinh</h4>
+                <p class="text-base text-slate-800 font-medium leading-relaxed whitespace-pre-wrap italic">"{{ getStudentEssayAnswer(question.id) || '(Không có câu trả lời)' }}"</p>
+              </div>
+
+              <!-- AI Feedback and Assessment -->
+              <div class="bg-gradient-to-r from-brand-50 to-emerald-50 border-2 border-brand-200 shadow-md rounded-2xl p-6 relative overflow-hidden" v-if="gradingResult.details[question.id]?.ai_feedback">
+                <div class="absolute right-0 top-0 text-brand-500/10 text-8xl -mt-6 -mr-4 pointer-events-none"><i class="fas fa-robot"></i></div>
+                <div class="flex items-center gap-2 text-brand-800 font-black text-sm mb-3 uppercase tracking-wider relative z-10">
+                  <i class="fas fa-sparkles text-brand-500 text-lg"></i> Nhận xét chi tiết từ AI
+                </div>
+                <p class="text-sm text-slate-800 font-semibold leading-relaxed relative z-10">{{ gradingResult.details[question.id].ai_feedback }}</p>
+              </div>
+
+              <!-- Essay References -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                  <h4 class="font-black text-slate-500 mb-3 text-xs uppercase tracking-widest"><i class="fas fa-check-double text-green-500 mr-1.5"></i> Đáp án tham chiếu chuẩn</h4>
+                  <p class="text-slate-700 font-semibold leading-relaxed bg-slate-50 p-3 rounded-xl">{{ question.correct_answer }}</p>
+                </div>
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                  <h4 class="font-black text-slate-500 mb-3 text-xs uppercase tracking-widest"><i class="fas fa-scale-balanced text-amber-500 mr-1.5"></i> Tiêu chí chấm điểm (Rubric)</h4>
+                  <p class="text-slate-700 font-semibold leading-relaxed bg-slate-50 p-3 rounded-xl">{{ question.rubric || 'Đầy đủ ý chính theo đáp án mẫu.' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Explanation segment -->
+            <div v-if="question.explanation" class="bg-amber-50/80 border-2 border-amber-200 shadow-sm rounded-2xl p-5 text-sm flex gap-4 mt-2">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                <i class="fas fa-lightbulb text-xl"></i>
+              </div>
+              <div class="text-amber-900 leading-relaxed font-semibold">
+                <strong class="text-amber-800 font-black block mb-1 uppercase text-[11px] tracking-widest">Gợi ý / Giải thích kiến thức:</strong> 
+                {{ question.explanation }}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- VIEW: HISTORY MANAGEMENT -->
+      <div v-if="currentView === 'history'" class="flex flex-col gap-8 flex-1 relative z-10">
+        <div class="glass-panel p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg shadow-slate-900/20">
+              <i class="fas fa-layer-group text-xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-black text-slate-800 tracking-tight">Lịch sử Đề thi</h2>
+              <p class="text-sm text-slate-500 font-bold mt-0.5">Kho lưu trữ kết quả và đề thi bạn đã thực hiện.</p>
+            </div>
+          </div>
+          
+          <!-- Filters bar -->
+          <div class="flex flex-wrap items-center gap-3">
+            <select v-model="historyFilter.subject" class="bg-white border border-slate-200 text-sm font-bold text-slate-700 px-4 py-2.5 rounded-xl shadow-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+              <option value="all">Tất cả môn học</option>
+              <option v-for="subj in getHistorySubjects()" :value="subj" :key="subj">{{ subj }}</option>
+            </select>
+            <select v-model="historyFilter.type" class="bg-white border border-slate-200 text-sm font-bold text-slate-700 px-4 py-2.5 rounded-xl shadow-sm focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
+              <option value="all">Tất cả hình thức</option>
+              <option value="multiple_choice">Trắc nghiệm</option>
+              <option value="essay">Tự luận</option>
+              <option value="hybrid">Kết hợp</option>
+            </select>
+            <button @click="clearAllHistory" class="bg-white text-red-500 border border-red-200 hover:bg-red-50 font-black px-4 py-2.5 rounded-xl text-sm transition shadow-sm flex items-center">
+              <i class="fas fa-trash-can mr-2"></i> Xóa sạch
+            </button>
+          </div>
+        </div>
+
+        <!-- History cards grid -->
+        <div v-if="filteredHistory.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="item in filteredHistory" :key="item.attemptId" class="glass-card p-6 rounded-2xl flex flex-col justify-between gap-5 relative overflow-hidden group">
+            
+            <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-brand-100 to-transparent rounded-bl-full opacity-50 pointer-events-none transition group-hover:scale-125 group-hover:opacity-100"></div>
+
+            <div class="flex flex-col gap-4 z-10">
+              <div class="flex items-center justify-between">
+                <span class="bg-brand-50 text-brand-700 border border-brand-200 text-[10px] font-black px-3 py-1 rounded-md shadow-sm uppercase tracking-widest">
+                  <i class="fas mr-1.5" :class="item.quizType === 'multiple_choice' ? 'fa-list-check' : item.quizType === 'essay' ? 'fa-file-pen' : 'fa-shuffle'"></i>
+                  {{ item.quizType === 'multiple_choice' ? 'Trắc nghiệm' : item.quizType === 'essay' ? 'Tự luận' : 'Kết hợp' }}
+                </span>
+                <span class="text-[10px] text-slate-400 font-bold bg-white px-2 py-1 rounded border border-slate-100">{{ formatDate(item.submittedAt) }}</span>
+              </div>
+
+              <h3 class="font-extrabold text-slate-800 text-lg leading-snug group-hover:text-brand-600 transition">{{ item.quizTitle }}</h3>
+
+              <div class="flex items-center gap-4 text-xs font-bold text-slate-500 bg-white/60 p-2.5 rounded-xl border border-slate-100 shadow-sm">
+                <span class="flex items-center"><i class="fas fa-book text-brand-400 mr-2"></i>{{ item.quizSubject }}</span>
+                <span class="flex items-center"><i class="fas fa-stopwatch text-brand-400 mr-2"></i>{{ formatDuration(item.timeSpentSeconds) }}</span>
+              </div>
+            </div>
+
+            <!-- Score display & action buttons -->
+            <div class="flex items-center justify-between border-t border-slate-200/60 pt-4 mt-2 z-10">
+              <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Điểm</span>
+                <span class="text-2xl font-black text-glossy">{{ formatScore(item.score) }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button @click="viewPastResult(item.attemptId)" class="bg-white border-2 border-slate-200 hover:border-brand-300 hover:text-brand-600 text-slate-500 w-10 h-10 flex items-center justify-center rounded-xl text-sm font-bold transition shadow-sm" title="Xem kết quả">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button @click="retryQuizFromHistory(item.quizId)" class="btn-glossy px-4 py-2.5 rounded-xl text-xs flex items-center" title="Làm lại đề thi">
+                  <i class="fas fa-rotate-right mr-1.5"></i> Làm lại
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Empty history state -->
+        <div v-else class="glass-panel p-16 text-center flex flex-col items-center justify-center gap-5 h-80">
+          <div class="w-20 h-20 rounded-3xl bg-slate-50 flex items-center justify-center text-slate-300 border-2 border-slate-200 shadow-inner">
+            <i class="fas fa-box-open text-4xl"></i>
+          </div>
+          <div>
+            <h3 class="font-black text-xl text-slate-700">Chưa có dữ liệu ôn tập</h3>
+            <p class="text-sm font-semibold text-slate-500 mt-2 max-w-sm mx-auto">Bạn chưa thực hiện bài thi nào. Hãy quay lại trang chủ, tải tài liệu lên và bắt đầu hành trình học tập với AI ngay!</p>
+          </div>
+          <button @click="changeView('dashboard')" class="btn-glossy px-8 py-3.5 rounded-xl text-sm mt-3 flex items-center gap-2 shadow-brand-500/30">
+            <i class="fas fa-rocket"></i> Tạo đề thi đầu tiên
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto py-8 relative z-10 text-center">
+      <div class="max-w-7xl mx-auto flex flex-col items-center gap-3">
+        <div class="text-[11px] font-black uppercase tracking-widest text-slate-400">
+          &copy; 2026 Smart Quiz Builder &bull; AI Powered Education
+        </div>
+        <div class="flex gap-4 text-xs font-bold text-brand-600/70">
+          <a href="#" class="hover:text-brand-600 transition">Phiên bản Glossy Emerald</a>
+        </div>
+      </div>
+    </footer>
+
+    <!-- SETTINGS MODAL (API KEY & MODEL CONFIGURATION) -->
+    <div v-if="showSettings" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="fixed inset-0 bg-slate-900/30 backdrop-blur-md transition-opacity" @click="showSettings = false"></div>
+      <div class="bg-white/90 backdrop-blur-xl max-w-md w-full rounded-3xl p-8 relative z-10 flex flex-col gap-6 shadow-2xl border border-white/50 animate-scaleUp transform transition-all">
+        
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4">
+          <h3 class="font-black text-xl text-slate-800 flex items-center"><i class="fas fa-key text-brand-500 mr-3 text-2xl"></i> Cấu hình AI</h3>
+          <button @click="showSettings = false" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition"><i class="fas fa-xmark text-lg"></i></button>
+        </div>
+
+        <div class="flex flex-col gap-6">
+          
+          <!-- AI Provider Select -->
+          <div class="flex flex-col gap-2.5">
+            <label class="text-xs font-black text-slate-500 uppercase tracking-widest">Nền tảng Trí tuệ Nhân tạo</label>
+            <div class="grid grid-cols-2 gap-3">
+              <button @click="settings.provider = 'gemini'" 
+                      :class="['py-3 px-3 text-sm font-extrabold rounded-xl border-2 transition-all shadow-sm',
+                               settings.provider === 'gemini' ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-500/20' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600']">
+                <i class="fa-brands fa-google mr-1"></i> Gemini AI
+              </button>
+              <button @click="settings.provider = 'openai'" 
+                      :class="['py-3 px-3 text-sm font-extrabold rounded-xl border-2 transition-all shadow-sm',
+                               settings.provider === 'openai' ? 'bg-brand-50 border-brand-500 text-brand-700 ring-2 ring-brand-500/20' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-slate-600']">
+                <i class="fa-solid fa-microchip mr-1"></i> OpenAI
+              </button>
+            </div>
+          </div>
+
+          <!-- API Key Input -->
+          <div class="flex flex-col gap-2.5">
+            <div class="flex justify-between items-center">
+              <label class="text-xs font-black text-slate-500 uppercase tracking-widest">Khóa bảo mật (API Key)</label>
+              <a :href="settings.provider === 'gemini' ? 'https://aistudio.google.com/' : 'https://platform.openai.com/'" 
+                 target="_blank" class="text-xs text-brand-600 hover:text-brand-700 font-bold bg-brand-50 px-2 py-1 rounded">Lấy Key miễn phí <i class="fas fa-external-link text-[9px] ml-1"></i></a>
+            </div>
+            <div class="relative group">
+              <input :type="showApiKey ? 'text' : 'password'" v-model="settings.apiKey" 
+                     class="w-full bg-slate-50/50 border-2 border-slate-200 text-slate-800 py-4 pl-5 pr-14 rounded-xl shadow-inner focus:outline-none focus:border-brand-500 focus:bg-white transition text-sm font-mono font-bold"
+                     placeholder="Dán mã bí mật vào đây...">
+              <button @click="showApiKey = !showApiKey" class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-200 hover:text-brand-600 transition">
+                <i class="fas" :class="showApiKey ? 'fa-eye-slash' : 'fa-eye'"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Model Select -->
+          <div class="flex flex-col gap-2.5">
+            <label class="text-xs font-black text-slate-500 uppercase tracking-widest">Mô hình AI sử dụng</label>
+            <div class="relative">
+              <select v-model="settings.model" class="w-full bg-slate-50/50 border-2 border-slate-200 text-slate-800 py-4 px-5 rounded-xl shadow-inner focus:outline-none focus:border-brand-500 focus:bg-white transition text-sm font-bold appearance-none cursor-pointer">
+                <template v-if="settings.provider === 'gemini'">
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Tốc độ ánh sáng)</option>
+                  <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ổn định)</option>
+                  <option value="gemini-1.5-pro">Gemini 1.5 Pro (Siêu trí tuệ)</option>
+                </template>
+                <template v-else>
+                  <option value="gpt-4o-mini">GPT-4o Mini (Siêu nhanh)</option>
+                  <option value="gpt-4o">GPT-4o (Thông minh nhất)</option>
+                </template>
+              </select>
+              <i class="fas fa-chevron-down absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-3 mt-4 pt-6 border-t border-slate-200">
+          <button @click="saveSettings" class="w-full sm:w-auto flex-1 btn-glossy py-4 rounded-xl text-sm font-extrabold shadow-brand-500/30 transition">
+            <i class="fas fa-save mr-2"></i> Lưu Cấu Hình
+          </button>
+          <button @click="showSettings = false" class="w-full sm:w-auto bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 hover:text-slate-700 py-4 px-6 rounded-xl text-sm font-black transition">
+            Hủy bỏ
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Client-side Logic Script -->
+  <script>
+    const { createApp, ref, computed, onMounted, watch } = Vue;
+
+    createApp({
+      setup() {
+        // View routing state
+        const currentView = ref('dashboard'); // 'dashboard', 'quiz_session', 'grading_report', 'history'
+        const showSettings = ref(false);
+        const showApiKey = ref(false);
+
+        // API Key Settings
+        const settings = ref({
+          provider: 'gemini',
+          apiKey: '',
+          model: 'gemini-2.5-flash'
+        });
+        const hasApiKey = computed(() => !!settings.value.apiKey);
+
+        // Document uploading and text input state
+        const selectedFileName = ref('');
+        const fileLoading = ref(false);
+        const inputText = ref('');
+        const dragOver = ref(false);
+
+        // File text buffers
+        const extractedFileText = ref('');
+
+        // Quiz Configuration
+        const config = ref({
+          subject: 'Tự động phát hiện',
+          type: 'multiple_choice',
+          questionCount: 5,
+          duration: 15
+        });
+
+        // Current Active Quiz
+        const activeQuiz = ref({
+          id: '',
+          title: '',
+          subject: '',
+          quizType: '',
+          durationMinutes: 15,
+          questions: []
+        });
+
+        // Quiz session variables
+        const activeQuestionIndex = ref(0);
+        const activeQuestion = computed(() => {
+          if (!activeQuiz.value.questions || activeQuiz.value.questions.length === 0) return null;
+          return activeQuiz.value.questions[activeQuestionIndex.value];
+        });
+
+        const sessionAnswers = ref({});
+        const isGenerating = ref(false);
+        const generatingStatus = ref('');
+
+        // Timer
+        const timerSeconds = ref(0);
+        const timerPercent = ref(100);
+        let timerInterval = null;
+        let examStartSeconds = 0;
+
+        // Grading and analytics results
+        const gradingResult = ref({
+          attemptId: '',
+          quizId: '',
+          quizTitle: '',
+          quizSubject: '',
+          quizType: '',
+          score: 0,
+          timeSpentSeconds: 0,
+          submittedAt: '',
+          details: {}
+        });
+
+        // Toast notifications
+        const toasts = ref([]);
+        let toastIdCounter = 0;
+
+        // History list & Filter
+        const quizHistory = ref([]);
+        const historyFilter = ref({
+          subject: 'all',
+          type: 'all'
+        });
+
+        // Show Toast helper
+        function showToast(message, type = 'info') {
+          const id = toastIdCounter++;
+          toasts.value.push({ id, message, type });
+          setTimeout(() => {
+            removeToast(id);
+          }, 4000);
+        }
+
+        function removeToast(id) {
+          toasts.value = toasts.value.filter(t => t.id !== id);
+        }
+
+        // View Management
+        function changeView(view) {
+          currentView.value = view;
+          if (view !== 'quiz_session' && timerInterval) {
+            clearInterval(timerInterval);
+          }
+        }
+
+        // Storage load & save
+        function loadSettingsAndHistory() {
+          const savedSettings = localStorage.getItem('smart_quiz_settings');
+          if (savedSettings) {
+            settings.value = JSON.parse(savedSettings);
+          }
+          const savedHistory = localStorage.getItem('smart_quiz_history');
+          if (savedHistory) {
+            quizHistory.value = JSON.parse(savedHistory);
+          }
+        }
+
+        function saveSettings() {
+          if (!settings.value.apiKey.trim()) {
+            showToast('Vui lòng nhập API Key hợp lệ!', 'error');
+            return;
+          }
+          localStorage.setItem('smart_quiz_settings', JSON.stringify(settings.value));
+          showToast('Đã lưu cấu hình AI thành công!', 'success');
+          showSettings.value = false;
+        }
+
+        watch(() => settings.value.provider, (newProv) => {
+          if (newProv === 'gemini') {
+            settings.value.model = 'gemini-2.5-flash';
+          } else {
+            settings.value.model = 'gpt-4o-mini';
+          }
+        });
+
+        // File handlers
+        function handleFileSelect(e) {
+          const files = e.target.files;
+          if (files.length > 0) {
+            processUploadedFile(files[0]);
+          }
+        }
+
+        function handleFileDrop(e) {
+          dragOver.value = false;
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            processUploadedFile(files[0]);
+          }
+        }
+
+        async function processUploadedFile(file) {
+          const validTypes = ['text/plain', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+          const extension = file.name.split('.').pop().toLowerCase();
+          
+          if (!validTypes.includes(file.type) && !['pdf', 'docx', 'txt'].includes(extension)) {
+            showToast('Chỉ chấp nhận các tệp PDF, Word hoặc TXT!', 'error');
+            return;
+          }
+
+          fileLoading.value = true;
+          selectedFileName.value = file.name;
+          showToast(`Đang nạp dữ liệu: ${file.name}...`, 'info');
+
+          try {
+            const reader = new FileReader();
+            
+            if (extension === 'txt') {
+              reader.onload = (e) => {
+                extractedFileText.value = e.target.result;
+                fileLoading.value = false;
+                showToast('Hoàn tất trích xuất văn bản!', 'success');
+              };
+              reader.readAsText(file);
+            } 
+            else if (extension === 'pdf') {
+              reader.onload = async (e) => {
+                try {
+                  const typedarray = new Uint8Array(e.target.result);
+                  const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                  
+                  const loadingTask = pdfjsLib.getDocument({ data: typedarray });
+                  const pdf = await loadingTask.promise;
+                  let fullText = '';
+                  
+                  for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                    
+                    // Tối ưu tốc độ: Ngừng quét sớm nếu đã gom đủ dữ liệu văn bản (>20,000 ký tự) cho AI
+                    // Giúp những file PDF hàng trăm trang tải trong chớp mắt
+                    if (fullText.length > 20000) break;
+                  }
+                  
+                  extractedFileText.value = fullText;
+                  fileLoading.value = false;
+                  showToast(`Quét PDF thành công (${pdf.numPages} trang).`, 'success');
+                } catch (pdfErr) {
+                  console.error(pdfErr);
+                  showToast('Tài liệu PDF không hợp lệ hoặc chứa toàn ảnh scan.', 'error');
+                  clearFile();
+                }
+              };
+              reader.readAsArrayBuffer(file);
+            } 
+            else if (extension === 'docx') {
+              reader.onload = async (e) => {
+                try {
+                  const arrayBuffer = e.target.result;
+                  const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                  extractedFileText.value = result.value;
+                  fileLoading.value = false;
+                  showToast('Trích xuất Word hoàn tất!', 'success');
+                } catch (docxErr) {
+                  console.error(docxErr);
+                  showToast('Lỗi khi đọc file Word.', 'error');
+                  clearFile();
+                }
+              };
+              reader.readAsArrayBuffer(file);
+            }
+          } catch (err) {
+            console.error(err);
+            showToast('Lỗi nạp file.', 'error');
+            clearFile();
+          }
+        }
+
+        function clearFile() {
+          selectedFileName.value = '';
+          extractedFileText.value = '';
+          fileLoading.value = false;
+          if (this.$refs.fileInput) {
+            this.$refs.fileInput.value = '';
+          }
+        }
+
+        // Logic API Call to generate quiz
+        async function generateQuiz() {
+          if (!hasApiKey.value) {
+            showToast('Chưa có API Key. Cửa sổ cấu hình đang mở.', 'error');
+            showSettings.value = true;
+            return;
+          }
+
+          const rawText = selectedFileName.value ? extractedFileText.value : inputText.value;
+          if (rawText.trim().length < 50) {
+            showToast('Nội dung quá ngắn. Vui lòng cung cấp ít nhất 50 ký tự.', 'error');
+            return;
+          }
+
+          isGenerating.value = true;
+          generatingStatus.value = 'AI đang phân tích kiến thức...';
+
+          try {
+            const prompt = `Context: Bạn là một chuyên gia khảo thí và xây dựng đề kiểm tra giáo dục.
+Task: Hãy phân tích đoạn tài liệu được cung cấp dưới đây và tạo ra một bộ đề thi theo các tham số yêu cầu.
+
+[TÀI LIỆU GỐC]:
+${rawText.slice(0, 15000)}
+
+[THAM SỐ ĐỀ THI]:
+- Số lượng câu hỏi: ${config.value.questionCount}
+- Hình thức: ${config.value.type} (multiple_choice: Trắc nghiệm khách quan với 4 lựa chọn A, B, C, D; essay: Tự luận; hybrid: Kết hợp cả hai hình thức)
+- Môn học: ${config.value.subject === 'Tự động phát hiện' ? 'Tự nhận diện' : config.value.subject}
+
+Yêu cầu đầu ra (Output JSON format):
+Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần giải thích hãy viết NGẮN GỌN NHẤT CÓ THỂ (1-2 câu), cấu trúc như sau:
+{
+  "subject": "Tên môn học tự nhận diện",
+  "questions": [
+    {
+      "id": 1,
+      "type": "multiple_choice",
+      "question_text": "Nội dung câu hỏi trắc nghiệm...",
+      "options": ["A. ...", "B. ...", "C. ...", "D. ..."],
+      "correct_answer": "A",
+      "explanation": "Giải thích ngắn gọn (tối đa 2 câu)"
+    },
+    {
+      "id": 2,
+      "type": "essay",
+      "question_text": "Nội dung câu hỏi tự luận...",
+      "suggested_answer": "Các ý chính ngắn gọn",
+      "explanation": "Thang điểm chấm gọn gàng"
+    }
+  ]
+}`;
+
+            generatingStatus.value = 'Đang khởi tạo các câu hỏi hóc búa...';
+            const responseText = await callAiAPI(prompt, true);
+            
+            let cleanJson = responseText.trim();
+            if (cleanJson.startsWith('```json')) cleanJson = cleanJson.slice(7);
+            if (cleanJson.endsWith('```')) cleanJson = cleanJson.slice(0, -3);
+            cleanJson = cleanJson.trim();
+
+            const parsedQuiz = JSON.parse(cleanJson);
+            
+            activeQuiz.value = {
+              id: 'quiz_' + Date.now(),
+              title: parsedQuiz.title || 'Đề ôn tập thông minh',
+              subject: parsedQuiz.subject || config.value.subject || 'Tổng hợp',
+              quizType: config.value.type,
+              durationMinutes: config.value.duration,
+              questions: parsedQuiz.questions.map((q, idx) => {
+                // Adapt array options ["A. ...", "B. ..."] to internal UI object format {"A": "...", "B": "..."}
+                let optionsObj = null;
+                if (q.type === 'multiple_choice' && Array.isArray(q.options)) {
+                   optionsObj = {};
+                   q.options.forEach(opt => {
+                     const match = opt.match(/^([A-D])[\.\:\)]?\s*(.*)$/);
+                     if (match) {
+                       optionsObj[match[1]] = match[2];
+                     } else {
+                       optionsObj[opt.charAt(0)] = opt.slice(1).trim();
+                     }
+                   });
+                } else if (q.options) {
+                   optionsObj = q.options;
+                }
+
+                return {
+                  id: `q_${q.id || (idx+1)}`,
+                  question_text: q.question_text,
+                  question_type: q.type,
+                  options: optionsObj,
+                  correct_answer: q.type === 'multiple_choice' ? q.correct_answer : (q.suggested_answer || q.correct_answer),
+                  rubric: q.type === 'essay' ? q.explanation : '',
+                  max_score: 10 / parsedQuiz.questions.length, // Tự động chia đều điểm
+                  explanation: q.type === 'multiple_choice' ? q.explanation : ''
+                };
+              })
+            };
+
+            saveQuizToDB(activeQuiz.value);
+            showToast('Khởi tạo bài thi thành công!', 'success');
+            startQuizSession();
+
+          } catch (err) {
+            console.error(err);
+            showToast('AI gặp lỗi khi sinh đề: ' + err.message, 'error');
+          } finally {
+            isGenerating.value = false;
+          }
+        }
+
+        // Generic Caller for AI (Gemini / OpenAI) with Retry Logic
+        async function callAiAPI(promptText, isJson = false) {
+          const provider = settings.value.provider;
+          const apiKey = settings.value.apiKey;
+          const model = settings.value.model;
+          const maxRetries = 3;
+
+          for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+              if (provider === 'gemini') {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                const requestBody = {
+                  contents: [{ parts: [{ text: promptText }] }],
+                  generationConfig: isJson ? { responseMimeType: "application/json" } : {}
+                };
+
+                const res = await fetch(url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(requestBody)
+                });
+
+                if (!res.ok) {
+                  const errBody = await res.json().catch(() => ({}));
+                  throw new Error(errBody?.error?.message || `HTTP ${res.status}`);
+                }
+
+                const data = await res.json();
+                return data.candidates[0].content.parts[0].text;
+              } 
+              else {
+                const url = `https://api.openai.com/v1/chat/completions`;
+                const requestBody = {
+                  model: model,
+                  messages: [{ role: 'user', content: promptText }],
+                  response_format: isJson ? { type: "json_object" } : undefined
+                };
+
+                const res = await fetch(url, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                  },
+                  body: JSON.stringify(requestBody)
+                });
+
+                if (!res.ok) {
+                  const errBody = await res.json().catch(() => ({}));
+                  throw new Error(errBody?.error?.message || `HTTP ${res.status}`);
+                }
+
+                const data = await res.json();
+                return data.choices[0].message.content;
+              }
+            } catch (error) {
+              const errMsg = error.message.toLowerCase();
+              const isOverloaded = errMsg.includes('503') || errMsg.includes('429') || errMsg.includes('high demand') || errMsg.includes('overloaded');
+              
+              if (isOverloaded && attempt < maxRetries - 1) {
+                const waitTime = (attempt + 1) * 3000; // 3s, then 6s
+                generatingStatus.value = `Máy chủ AI đang quá tải, tự động thử lại sau ${waitTime/1000}s... (Lần ${attempt + 1}/${maxRetries-1})`;
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+              } else {
+                if (isOverloaded) {
+                  throw new Error('Hệ thống AI đang quá tải diện rộng. Vui lòng đợi vài phút rồi thử lại, hoặc đổi sang Model nhẹ hơn trong phần Cài đặt.');
+                }
+                throw error;
+              }
+            }
+          }
+        }
+
+        // Save generated quiz template to localStorage
+        function saveQuizToDB(quiz) {
+          const savedQuizzes = JSON.parse(localStorage.getItem('smart_quiz_templates') || '[]');
+          const filtered = savedQuizzes.filter(q => q.id !== quiz.id);
+          filtered.push(quiz);
+          localStorage.setItem('smart_quiz_templates', JSON.stringify(filtered));
+        }
+
+        function getQuizFromDB(quizId) {
+          const savedQuizzes = JSON.parse(localStorage.getItem('smart_quiz_templates') || '[]');
+          return savedQuizzes.find(q => q.id === quizId);
+        }
+
+        // Start playing quiz
+        function startQuizSession() {
+          activeQuestionIndex.value = 0;
+          
+          const ans = {};
+          activeQuiz.value.questions.forEach(q => {
+            if (q.question_type === 'multiple_choice') {
+              ans[q.id] = { selectedOption: '', attempts: 0, feedback: null, locked: false };
+            } else {
+              ans[q.id] = { draftText: '', history: [], attempts: 0, locked: false };
+            }
+          });
+          sessionAnswers.value = ans;
+
+          timerSeconds.value = activeQuiz.value.durationMinutes * 60;
+          timerPercent.value = 100;
+          examStartSeconds = timerSeconds.value;
+
+          if (timerInterval) clearInterval(timerInterval);
+          timerInterval = setInterval(() => {
+            timerSeconds.value--;
+            timerPercent.value = (timerSeconds.value / examStartSeconds) * 100;
+            if (timerSeconds.value <= 0) {
+              clearInterval(timerInterval);
+              showToast('Đã hết thời gian! Hệ thống tự động thu bài...', 'warning');
+              autoSubmitQuiz();
+            }
+          }, 1000);
+
+          currentView.value = 'quiz_session';
+        }
+
+        function nextQuestion() {
+          if (activeQuestionIndex.value < activeQuiz.value.questions.length - 1) {
+            activeQuestionIndex.value++;
+          }
+        }
+
+        function prevQuestion() {
+          if (activeQuestionIndex.value > 0) {
+            activeQuestionIndex.value--;
+          }
+        }
+
+        // Quiz bubble class colors
+        function getBubbleClass(question) {
+          const ans = sessionAnswers.value[question.id];
+          if (!ans) return 'bg-white border-slate-200 text-slate-400';
+
+          if (question.question_type === 'multiple_choice') {
+            if (ans.locked) {
+              return ans.feedback?.correct ? 'bg-green-50 border-green-400 text-green-600' : 'bg-red-50 border-red-300 text-red-600';
+            }
+            if (ans.attempts > 0) return 'bg-amber-50 border-amber-400 text-amber-600';
+            return ans.selectedOption ? 'bg-brand-50 border-brand-400 text-brand-600' : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50';
+          } 
+          else {
+            if (ans.locked) return 'bg-green-50 border-green-400 text-green-600';
+            if (ans.history.length > 0) {
+              return ans.attempts >= 3 ? 'bg-green-50 border-green-400 text-green-600' : 'bg-amber-50 border-amber-400 text-amber-600';
+            }
+            return ans.draftText.trim() ? 'bg-brand-50 border-brand-400 text-brand-600' : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50';
+          }
+        }
+
+        function selectOption(qId, optKey) {
+          if (sessionAnswers.value[qId].locked) return;
+          sessionAnswers.value[qId].selectedOption = optKey;
+        }
+
+        function getSelectedOption(qId) { return sessionAnswers.value[qId]?.selectedOption || ''; }
+        function getAttemptCount(qId) { return sessionAnswers.value[qId]?.attempts || 0; }
+        function isQuestionLocked(qId) { return sessionAnswers.value[qId]?.locked || false; }
+        function getQuestionFeedback(qId) { return sessionAnswers.value[qId]?.feedback || null; }
+
+        function checkMultipleChoiceAnswer(qId) {
+          const ans = sessionAnswers.value[qId];
+          const question = activeQuiz.value.questions.find(q => q.id === qId);
+
+          if (!ans || !question || ans.locked) return;
+
+          ans.attempts++;
+          const selected = ans.selectedOption;
+          const correct = question.correct_answer;
+
+          if (selected === correct) {
+            ans.feedback = { correct: true, message: 'Hoàn toàn chính xác!' };
+            ans.locked = true;
+            showToast('Chính xác! Điểm cộng cho bạn.', 'success');
+          } else {
+            if (ans.attempts >= 2) {
+              ans.feedback = { correct: false, message: `Rất tiếc! Đáp án đúng là ${correct}` };
+              ans.locked = true;
+              showToast('Lựa chọn sai lần 2. Đã khóa câu hỏi!', 'error');
+            } else {
+              ans.feedback = { correct: false, message: 'Sai rồi. Bạn còn 1 cơ hội.' };
+              showToast('Sai! Hãy đọc kỹ và thử lại.', 'error');
+            }
+          }
+        }
+
+        function submitEssayDraft(qId) {
+          const ans = sessionAnswers.value[qId];
+          if (!ans || ans.locked || ans.attempts >= 3) return;
+
+          const text = ans.draftText.trim();
+          if (!text) return;
+
+          const now = new Date();
+          const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+          
+          ans.attempts++;
+          ans.history.push({ text: text, timestamp: timestamp });
+          
+          showToast(`Nháp lần ${ans.attempts}/3 đã được hệ thống ghi nhận.`, 'success');
+
+          if (ans.attempts >= 3) {
+            ans.locked = true;
+            showToast('Câu này đã bị khóa do nộp nháp quá 3 lần.', 'info');
+          }
+        }
+
+        function confirmSubmitQuiz() {
+          let unanswered = 0;
+          activeQuiz.value.questions.forEach(q => {
+            const ans = sessionAnswers.value[q.id];
+            if (q.question_type === 'multiple_choice') {
+              if (!ans.locked && !ans.selectedOption) unanswered++;
+            } else {
+              if (ans.history.length === 0 && !ans.draftText.trim()) unanswered++;
+            }
+          });
+
+          let confirmMsg = 'Chấm dứt làm bài và xem kết quả ngay?';
+          if (unanswered > 0) confirmMsg = `Thực sự muốn nộp? Vẫn còn ${unanswered} câu chưa hoàn thành!`;
+
+          if (confirm(confirmMsg)) {
+            submitQuizAndGrade();
+          }
+        }
+
+        function autoSubmitQuiz() {
+          Object.keys(sessionAnswers.value).forEach(qId => {
+            const ans = sessionAnswers.value[qId];
+            ans.locked = true;
+            if (ans.draftText && ans.draftText.trim() && ans.history.length === 0) {
+              const now = new Date();
+              const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+              ans.attempts = 1;
+              ans.history.push({ text: ans.draftText.trim(), timestamp: timestamp });
+            }
+          });
+          submitQuizAndGrade();
+        }
+
+        async function submitQuizAndGrade() {
+          if (timerInterval) clearInterval(timerInterval);
+
+          isGenerating.value = true;
+          generatingStatus.value = 'AI đang tổng hợp và đánh giá kết quả...';
+          currentView.value = 'dashboard';
+
+          const timeSpentSeconds = examStartSeconds - timerSeconds.value;
+          const attemptId = 'attempt_' + Date.now();
+          
+          const details = {};
+          let totalScore = 0;
+          let maxExamScore = 0;
+
+          const essaysToGrade = [];
+
+          activeQuiz.value.questions.forEach(q => {
+            maxExamScore += q.max_score;
+            const ans = sessionAnswers.value[q.id];
+
+            if (q.question_type === 'multiple_choice') {
+              let score = 0;
+              if (ans.selectedOption === q.correct_answer) {
+                score = q.max_score;
+              }
+              totalScore += score;
+
+              const historyArray = [];
+              if (ans.attempts > 0) {
+                if (ans.attempts === 1) {
+                  historyArray.push({ selected: ans.selectedOption, correct: ans.selectedOption === q.correct_answer });
+                } else if (ans.attempts === 2) {
+                  historyArray.push({ selected: '(Sai lượt 1)', correct: false });
+                  historyArray.push({ selected: ans.selectedOption, correct: ans.selectedOption === q.correct_answer });
+                }
+              }
+              details[q.id] = {
+                question_type: 'multiple_choice',
+                answers_history: historyArray,
+                final_score: score,
+                ai_feedback: score === q.max_score ? 'Lựa chọn chính xác hoàn toàn.' : 'Bạn đã chọn sai đáp án.'
+              };
+            } 
+            else {
+              let studentAnswerText = '';
+              if (ans.history.length > 0) {
+                studentAnswerText = ans.history[ans.history.length - 1].text;
+              } else if (ans.draftText.trim()) {
+                studentAnswerText = ans.draftText.trim();
+                ans.history.push({ text: studentAnswerText, timestamp: 'Tự động' });
+              }
+
+              essaysToGrade.push({
+                id: q.id,
+                question_text: q.question_text,
+                correct_answer: q.correct_answer,
+                rubric: q.rubric,
+                max_score: q.max_score,
+                student_answer: studentAnswerText
+              });
+
+              details[q.id] = {
+                question_type: 'essay',
+                answers_history: ans.history.map(h => ({ selected: h.text, correct: null })),
+                final_score: 0,
+                ai_feedback: 'Đang đợi phân tích...'
+              };
+            }
+          });
+
+          if (essaysToGrade.length > 0) {
+            for (let i = 0; i < essaysToGrade.length; i++) {
+              const essay = essaysToGrade[i];
+              generatingStatus.value = `AI đang đọc và chấm tự luận ${i + 1}/${essaysToGrade.length}...`;
+
+              if (!essay.student_answer.trim()) {
+                details[essay.id].final_score = 0;
+                details[essay.id].ai_feedback = 'Học sinh bỏ trống, không có dữ liệu để chấm.';
+                continue;
+              }
+
+              try {
+                const gradePrompt = `Context: Bạn là giám khảo chấm thi bài tự luận.
+Task: Hãy so sánh "Câu trả lời của học sinh" với "Đáp án gợi ý" dựa trên "Câu hỏi" để chấm điểm và đưa ra nhận xét.
+
+Câu hỏi: ${essay.question_text}
+Đáp án gợi ý của hệ thống: ${essay.correct_answer}
+Câu trả lời của học sinh (Lượt trả lời cuối cùng): ${essay.student_answer}
+
+Yêu cầu đầu ra:
+Hãy chấm điểm trên thang điểm 10 và đưa ra lời khuyên chi tiết cho học sinh biết họ thiếu ý nào, sai ở đâu so với tài liệu gốc. Trả về định dạng JSON:
+{
+  "score": 8.5,
+  "feedback": "Lời nhận xét chi tiết và hướng dẫn sửa sai..."
+}`;
+                
+                const response = await callAiAPI(gradePrompt, true);
+                
+                let cleanRes = response.trim();
+                if (cleanRes.startsWith('```json')) cleanRes = cleanRes.slice(7);
+                if (cleanRes.endsWith('```')) cleanRes = cleanRes.slice(0, -3);
+                cleanRes = cleanRes.trim();
+
+                const parsedGrading = JSON.parse(cleanRes);
+                const aiScoreOutOf10 = parseFloat(parsedGrading.score) || 0;
+                
+                // Chuẩn hóa điểm từ thang 10 của AI về thang điểm tối đa của câu hỏi này
+                const normalizedScore = (aiScoreOutOf10 / 10) * essay.max_score;
+                details[essay.id].final_score = Math.min(normalizedScore, essay.max_score);
+                details[essay.id].ai_feedback = parsedGrading.feedback || 'Không có nhận xét chi tiết.';
+                totalScore += details[essay.id].final_score;
+
+              } catch (err) {
+                details[essay.id].final_score = 0;
+                details[essay.id].ai_feedback = 'Lỗi kết nối AI khi chấm điểm: ' + err.message;
+              }
+            }
+          }
+
+          let finalNormalizedScore = totalScore;
+          if (maxExamScore !== 10 && maxExamScore > 0) {
+            finalNormalizedScore = (totalScore / maxExamScore) * 10;
+          }
+
+          const now = new Date();
+          gradingResult.value = {
+            attemptId: attemptId,
+            quizId: activeQuiz.value.id,
+            quizTitle: activeQuiz.value.title,
+            quizSubject: activeQuiz.value.subject,
+            quizType: activeQuiz.value.quizType,
+            score: Math.min(Math.max(finalNormalizedScore, 0), 10),
+            timeSpentSeconds: timeSpentSeconds,
+            submittedAt: now.toISOString(),
+            details: details
+          };
+
+          quizHistory.value.unshift(gradingResult.value);
+          localStorage.setItem('smart_quiz_history', JSON.stringify(quizHistory.value));
+
+          showToast('Đánh giá hoàn tất. Xin mời xem kết quả!', 'success');
+          isGenerating.value = false;
+          currentView.value = 'grading_report';
+        }
+
+        function restartQuiz() { startQuizSession(); }
+
+        function retryQuizFromHistory(quizId) {
+          const quiz = getQuizFromDB(quizId);
+          if (quiz) {
+            activeQuiz.value = quiz;
+            startQuizSession();
+            showToast(`Mở bài thi: ${quiz.title}`, 'info');
+          } else {
+            showToast('Lỗi: Đề thi gốc có thể đã bị xóa khỏi thiết bị!', 'error');
+          }
+        }
+
+        function viewPastResult(attemptId) {
+          const attempt = quizHistory.value.find(h => h.attemptId === attemptId);
+          if (attempt) {
+            const quiz = getQuizFromDB(attempt.quizId);
+            if (quiz) {
+              activeQuiz.value = quiz;
+              gradingResult.value = attempt;
+              currentView.value = 'grading_report';
+            } else {
+              showToast('Không tìm thấy thông tin đề gốc để xem chi tiết!', 'error');
+            }
+          }
+        }
+
+        function clearAllHistory() {
+          if (confirm('Thao tác này sẽ làm trống toàn bộ kho lưu trữ. Bạn chắc chắn chứ?')) {
+            quizHistory.value = [];
+            localStorage.removeItem('smart_quiz_history');
+            showToast('Kho dữ liệu lịch sử đã được làm sạch.', 'success');
+          }
+        }
+
+        // Analytics helpers
+        function countMultipleChoice() { return activeQuiz.value.questions.filter(q => q.question_type === 'multiple_choice').length; }
+        function countCorrectMultipleChoice() {
+          let count = 0;
+          activeQuiz.value.questions.forEach(q => {
+            if (q.question_type === 'multiple_choice') {
+              if (gradingResult.value.details[q.id]?.final_score > 0) count++;
+            }
+          });
+          return count;
+        }
+        function sumEssayScore() {
+          let sum = 0;
+          activeQuiz.value.questions.forEach(q => {
+            if (q.question_type === 'essay') {
+              if (gradingResult.value.details[q.id]) sum += gradingResult.value.details[q.id].final_score;
+            }
+          });
+          return sum.toFixed(1);
+        }
+        function maxEssayScore() {
+          let sum = 0;
+          activeQuiz.value.questions.forEach(q => {
+            if (q.question_type === 'essay') sum += q.max_score;
+          });
+          return sum.toFixed(1);
+        }
+        function getQuestionScore(qId) { return gradingResult.value.details[qId]?.final_score?.toFixed(1) || '0.0'; }
+        function getSelectedOptionInReport(qId) {
+          const detail = gradingResult.value.details[qId];
+          if (detail && detail.answers_history?.length > 0) {
+            return detail.answers_history[detail.answers_history.length - 1].selected;
+          }
+          return '';
+        }
+        function getStudentEssayAnswer(qId) {
+          const detail = gradingResult.value.details[qId];
+          if (detail && detail.answers_history?.length > 0) {
+            return detail.answers_history[detail.answers_history.length - 1].selected;
+          }
+          return '';
+        }
+
+        const filteredHistory = computed(() => {
+          return quizHistory.value.filter(item => {
+            const matchSubject = historyFilter.value.subject === 'all' || item.quizSubject === historyFilter.value.subject;
+            const matchType = historyFilter.value.type === 'all' || item.quizType === historyFilter.value.type;
+            return matchSubject && matchType;
+          });
+        });
+
+        function getHistorySubjects() {
+          const subjects = new Set();
+          quizHistory.value.forEach(item => { if (item.quizSubject) subjects.add(item.quizSubject); });
+          return Array.from(subjects);
+        }
+
+        // Formatting utilities
+        function formatTimer(sec) {
+          const m = Math.floor(sec / 60).toString().padStart(2, '0');
+          const s = (sec % 60).toString().padStart(2, '0');
+          return `${m}:${s}`;
+        }
+        function formatDuration(sec) {
+          if (sec < 60) return `${sec}s`;
+          const m = Math.floor(sec / 60);
+          const s = sec % 60;
+          return s > 0 ? `${m}m ${s}s` : `${m}m`;
+        }
+        function formatDate(isoStr) {
+          if (!isoStr) return '';
+          const d = new Date(isoStr);
+          return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+        }
+        function formatScore(score) { return typeof score === 'number' ? score.toFixed(1) : '0.0'; }
+        
+        function getRatingText(score) {
+          if (score >= 9) return 'Xuất Sắc';
+          if (score >= 8) return 'Giỏi';
+          if (score >= 6.5) return 'Khá Tốt';
+          if (score >= 5) return 'Trung Bình';
+          return 'Cần Nỗ Lực Thêm';
+        }
+        
+        function getRatingClass(score) {
+          if (score >= 8) return 'text-brand-600 bg-brand-50 border-brand-200';
+          if (score >= 6.5) return 'text-amber-600 bg-amber-50 border-amber-200';
+          if (score >= 5) return 'text-blue-600 bg-blue-50 border-blue-200';
+          return 'text-red-600 bg-red-50 border-red-200';
+        }
+        
+        function getRatingGradient(score) {
+          if (score >= 8) return 'from-brand-100 to-brand-300';
+          if (score >= 6.5) return 'from-amber-100 to-amber-300';
+          if (score >= 5) return 'from-blue-100 to-blue-300';
+          return 'from-red-100 to-red-300';
+        }
+
+        onMounted(() => {
+          loadSettingsAndHistory();
+        });
+
+        return {
+          currentView, showSettings, showApiKey, settings, hasApiKey,
+          selectedFileName, fileLoading, inputText, dragOver, config, activeQuiz,
+          activeQuestionIndex, activeQuestion, sessionAnswers, isGenerating, generatingStatus,
+          timerSeconds, timerPercent, gradingResult, toasts, quizHistory, historyFilter, filteredHistory,
+
+          showToast, removeToast, changeView, saveSettings, handleFileSelect, handleFileDrop,
+          clearFile, generateQuiz, selectOption, getSelectedOption, getAttemptCount,
+          isQuestionLocked, getQuestionFeedback, checkMultipleChoiceAnswer, submitEssayDraft,
+          confirmSubmitQuiz, restartQuiz, retryQuizFromHistory, viewPastResult, clearAllHistory,
+          getBubbleClass, prevQuestion, nextQuestion, countMultipleChoice, countCorrectMultipleChoice,
+          sumEssayScore, maxEssayScore, getQuestionScore, getSelectedOptionInReport,
+          getStudentEssayAnswer, getHistorySubjects, formatTimer, formatDuration, formatDate,
+          formatScore, getRatingText, getRatingClass, getRatingGradient
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
