@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ứng dụng Tạo Đề Ôn Tập Thông Minh</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body class="light-theme">
+    <!-- Background Elements for Aesthetics -->
+    <div class="glass-bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-logo">
+                <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                <div class="logo-text">
+                    <h1>Antigravity Quiz</h1>
+                    <span>Hệ thống ôn luyện thông minh</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-theme-toggle" class="btn-icon" title="Đổi giao diện">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN DASHBOARD -->
+        <main id="screen-dashboard" class="screen-view">
+            <div class="dashboard-grid">
+                <!-- Left column: Upload and Library -->
+                <div class="dashboard-left">
+                    <!-- AI Quiz Generation Section -->
+                    <section class="dashboard-card glass-panel upload-section">
+                        <div class="card-header">
+                            <i class="fa-solid fa-wand-magic-sparkles header-icon purple-icon"></i>
+                            <h2>AI Tạo Đề Tự Động</h2>
+                        </div>
+                        <p class="card-desc">Nhập nội dung ôn tập hoặc tải lên tài liệu (PDF, Word, TXT, JSON). AI sẽ phân tích, phân loại và tạo đề trắc nghiệm tự động.</p>
+                        
+                        <!-- AI Generation Form -->
+                        <div class="ai-gen-container">
+                            <textarea id="ai-content-input" class="ai-textarea" placeholder="Nhập nội dung ôn tập, khái niệm, hoặc bài tập tại đây..." rows="4"></textarea>
+                            
+                            <div class="divider-text">hoặc</div>
+
+                            <div id="drop-zone" class="upload-dropzone">
+                                <i class="fa-solid fa-file-arrow-up dropzone-icon"></i>
+                                <p>Kéo thả tài liệu ở đây hoặc <span class="browse-link">chọn từ máy tính</span></p>
+                                <input type="file" id="file-input" accept=".pdf,.doc,.docx,.txt,.json" hidden>
+                                <span class="file-limits">Hỗ trợ: PDF, DOCX, TXT, JSON (Mẫu: <a href="sample_quiz.json" download style="color: var(--color-emerald);">sample_quiz.json</a>)</span>
+                            </div>
+                            
+                            <!-- Display selected file info -->
+                            <div id="selected-file-info" class="selected-file-info hidden">
+                                <i class="fa-solid fa-file-lines file-icon"></i>
+                                <span id="selected-file-name" class="file-name">filename.pdf</span>
+                                <i class="fa-solid fa-xmark remove-file" id="btn-remove-file" title="Xóa tệp"></i>
+                            </div>
+
+                            <button id="btn-generate-ai" class="btn btn-primary btn-full-width generate-btn">
+                                <i class="fa-solid fa-robot"></i> Tạo Đề Ôn Tập Tự Động
+                            </button>
+                        </div>
+                        
+                        <!-- Uploading Status -->
+                        <div id="upload-status" class="upload-status hidden">
+                            <div class="spinner"></div>
+                            <span id="upload-status-text">Đang phân tích tài liệu và tạo câu hỏi...</span>
+                        </div>
+                    </section>
+
+                    <!-- Library Selection -->
+                    <section class="dashboard-card glass-panel library-section">
+                        <div class="card-header">
+                            <i class="fa-solid fa-book-open header-icon indigo-icon"></i>
+                            <h2>Thư viện đề ôn tập</h2>
+                        </div>
+                        <p class="card-desc">Chọn tài liệu đã lưu để làm bài ôn luyện mà không cần tải lại file.</p>
+                        
+                        <div class="search-filter">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="library-search" placeholder="Tìm kiếm tài liệu...">
+                        </div>
+
+                        <div id="library-list" class="library-list">
+                            <!-- JS will inject library items here -->
+                            <div class="empty-state">
+                                <i class="fa-solid fa-folder-open empty-icon"></i>
+                                <p>Thư viện trống. Hãy tải lên tài liệu đầu tiên!</p>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right column: Global Scoreboard / History -->
+                <div class="dashboard-right">
+                    <section class="dashboard-card glass-panel history-section">
+                        <div class="card-header">
+                            <i class="fa-solid fa-chart-line header-icon emerald-icon"></i>
+                            <h2>Lịch sử làm bài thi</h2>
+                        </div>
+                        <p class="card-desc">Bảng xếp hạng và kết quả các lượt ôn tập gần nhất.</p>
+                        
+                        <div class="history-table-container">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Học sinh</th>
+                                        <th>Tài liệu</th>
+                                        <th>Điểm số</th>
+                                        <th>Thời gian</th>
+                                        <th>Thử lại</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-rows">
+                                    <!-- JS will inject history rows here -->
+                                    <tr>
+                                        <td colspan="5" class="no-data">Chưa có lịch sử làm bài.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- STUDENT NAME INITIALIZATION MODAL -->
+        <div id="modal-student-name" class="modal hidden">
+            <div class="modal-content glass-panel">
+                <i class="fa-solid fa-circle-user modal-avatar"></i>
+                <h2>Bắt đầu ôn tập</h2>
+                <p>Vui lòng nhập tên của bạn để lưu lại lịch sử làm bài thi.</p>
+                <form id="form-start-quiz">
+                    <div class="input-group">
+                        <input type="text" id="student-name-input" required placeholder="Nhập tên học sinh..." autocomplete="off">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" id="btn-cancel-start" class="btn btn-secondary">Hủy</button>
+                        <button type="submit" class="btn btn-primary">Bắt đầu thi <i class="fa-solid fa-play"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ACTIVE QUIZ SCREEN -->
+        <main id="screen-quiz" class="screen-view hidden">
+            <div class="quiz-layout">
+                <!-- Side Panel (Timer, Progress, Stats) -->
+                <aside class="quiz-sidebar">
+                    <!-- Timer Box -->
+                    <div class="quiz-sidebar-card glass-panel timer-box">
+                        <span class="sidebar-label">Thời gian còn lại</span>
+                        <div id="countdown-timer" class="timer-display">
+                            <i class="fa-regular fa-clock clock-icon"></i>
+                            <span id="timer-text">15:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress Box -->
+                    <div class="quiz-sidebar-card glass-panel progress-box">
+                        <div class="progress-info">
+                            <span class="sidebar-label">Tiến độ làm bài</span>
+                            <span id="progress-text" class="progress-count">Câu 1/10</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Student Profile -->
+                    <div class="quiz-sidebar-card glass-panel student-profile-box">
+                        <div class="profile-avatar">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
+                        <div class="profile-details">
+                            <span class="sidebar-label">Học sinh</span>
+                            <h3 id="quiz-student-name">Tên học sinh</h3>
+                            <span id="quiz-doc-name" class="doc-badge">Tài liệu</span>
+                        </div>
+                    </div>
+
+                    <button id="btn-quit-quiz" class="btn btn-danger-outline btn-full-width">
+                        <i class="fa-solid fa-right-from-bracket"></i> Thoát và hủy bài
+                    </button>
+                </aside>
+
+                <!-- Active Question area -->
+                <div class="quiz-main-content">
+                    <!-- Question Card Container for Transition Animations -->
+                    <div id="question-container" class="question-container">
+                        <!-- Single Question Card -->
+                        <div class="question-card glass-panel" id="active-question-card">
+                            <div class="question-header">
+                                <span class="question-number-badge">Câu <span id="q-index-display">1</span></span>
+                                <div class="attempts-status" id="attempts-badge">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Còn 3/3 lần thử lại</span>
+                                </div>
+                            </div>
+                            
+                            <div class="question-body">
+                                <h3 id="question-text">Đang tải câu hỏi...</h3>
+                            </div>
+
+                            <div class="options-list" id="options-container">
+                                <!-- Option Items -->
+                                <div class="option-item" data-letter="A">
+                                    <span class="option-letter">A</span>
+                                    <p class="option-content">Lựa chọn A</p>
+                                </div>
+                                <div class="option-item" data-letter="B">
+                                    <span class="option-letter">B</span>
+                                    <p class="option-content">Lựa chọn B</p>
+                                </div>
+                                <div class="option-item" data-letter="C">
+                                    <span class="option-letter">C</span>
+                                    <p class="option-content">Lựa chọn C</p>
+                                </div>
+                                <div class="option-item" data-letter="D">
+                                    <span class="option-letter">D</span>
+                                    <p class="option-content">Lựa chọn D</p>
+                                </div>
+                            </div>
+
+                            <!-- Interactive Feedback Area -->
+                            <div id="feedback-alert" class="feedback-alert hidden">
+                                <i class="fa-solid fa-circle-exclamation feedback-icon"></i>
+                                <span id="feedback-message">Thông báo phản hồi</span>
+                            </div>
+                            
+                            <div class="question-actions">
+                                <button id="btn-check-answer" class="btn btn-primary" disabled>
+                                    Kiểm tra đáp án <i class="fa-solid fa-check"></i>
+                                </button>
+                                <button id="btn-next-question" class="btn btn-secondary hidden">
+                                    Chuyển câu tiếp <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button id="btn-submit-quiz" class="btn btn-success hidden">
+                                    Nộp bài thi <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- POST-SUBMISSION RESULTS SCREEN -->
+        <main id="screen-results" class="screen-view hidden">
+            <div class="results-container">
+                <!-- Overview Card -->
+                <div class="results-overview glass-panel">
+                    <div class="trophy-badge animate-bounce">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h2>Kết quả luyện tập</h2>
+                    <p id="result-congrats">Chúc mừng bạn đã hoàn thành bài thi!</p>
+                    
+                    <div class="score-circle">
+                        <svg class="progress-ring" width="140" height="140">
+                            <circle class="progress-ring__circle-bg" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="transparent" r="60" cx="70" cy="70"/>
+                            <circle id="score-ring-fill" class="progress-ring__circle" stroke="#10b981" stroke-width="8" fill="transparent" r="60" cx="70" cy="70"/>
+                        </svg>
+                        <div class="score-text">
+                            <span id="score-display">0.0</span>
+                            <span class="score-max">/10 Điểm</span>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-val correct-color" id="stat-correct">0/0</span>
+                            <span class="stat-label">Số câu đúng</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-val incorrect-color" id="stat-incorrect">0/0</span>
+                            <span class="stat-label">Số câu sai</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-val" id="stat-retries">0.0</span>
+                            <span class="stat-label">Thử lại TB/câu</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-val" id="stat-time">0m 0s</span>
+                            <span class="stat-label">Thời gian làm</span>
+                        </div>
+                    </div>
+
+                    <button id="btn-back-dashboard" class="btn btn-primary">
+                        <i class="fa-solid fa-house"></i> Quay lại Trang chủ
+                    </button>
+                </div>
+
+                <!-- Review Section: Questions list with correct options and explanations -->
+                <div class="results-review glass-panel">
+                    <div class="review-header">
+                        <i class="fa-solid fa-square-poll-horizontal header-icon"></i>
+                        <h2>Chi tiết đáp án & giải thích</h2>
+                    </div>
+                    <p class="review-desc">Đáp án đúng và giải thích chi tiết cho từng câu hỏi chỉ được hiển thị ở bước này sau khi bạn đã nộp bài.</p>
+                    
+                    <div class="review-list" id="review-list-container">
+                        <!-- JS will inject questions with correct/incorrect markers and explanations -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Fireworks Overlay (Canvas for fireworks) -->
+    <canvas id="fireworks-canvas" class="fireworks-canvas"></canvas>
+
+    <!-- Custom App Script -->
+    <script src="static/app.js"></script>
+</body>
+</html>
