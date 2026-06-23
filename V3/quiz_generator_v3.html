@@ -384,6 +384,70 @@
 
       </div>
 
+      <!-- VIEW: QUIZ PREVIEW & START -->
+      <div v-if="currentView === 'quiz_preview'" class="flex items-center justify-center flex-1 py-8 relative z-10 animate-scaleUp">
+        <div class="glass-panel p-8 md:p-12 max-w-2xl w-full flex flex-col gap-8 shadow-2xl border-brand-200 bg-gradient-to-br from-white via-brand-50/10 to-brand-100/10">
+          
+          <!-- Header and Success Checkmark -->
+          <div class="text-center flex flex-col items-center gap-4">
+            <div class="w-20 h-20 bg-gradient-to-tr from-brand-400 to-brand-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-brand-500/20 border border-brand-300 animate-bounce">
+              <i class="fas fa-file-circle-check text-4xl"></i>
+            </div>
+            <div>
+              <h2 class="text-3xl font-black text-glossy tracking-tight">Đề thi đã sẵn sàng!</h2>
+              <p class="text-sm font-semibold text-slate-500 mt-2">Đề thi đã được khởi tạo và lưu thành công vào hệ thống.</p>
+            </div>
+          </div>
+
+          <!-- Quiz Detail Metadata Card -->
+          <div class="bg-white/80 border border-brand-100 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+            <div class="border-b border-slate-100 pb-3">
+              <h3 class="font-bold text-slate-800 text-lg text-center leading-snug">{{ activeQuiz.title }}</h3>
+            </div>
+            <div class="grid grid-cols-2 gap-4 text-sm font-bold text-slate-600">
+              <div class="bg-brand-50/50 p-4 rounded-xl border border-brand-100/50 flex flex-col gap-1 items-center justify-center text-center">
+                <span class="text-[10px] uppercase font-black tracking-widest text-brand-600">Môn học</span>
+                <span class="text-slate-800 flex items-center gap-1.5"><i class="fas fa-book text-brand-500"></i>{{ activeQuiz.subject }}</span>
+              </div>
+              <div class="bg-brand-50/50 p-4 rounded-xl border border-brand-100/50 flex flex-col gap-1 items-center justify-center text-center">
+                <span class="text-[10px] uppercase font-black tracking-widest text-brand-600">Thời gian làm bài</span>
+                <span class="text-slate-800 flex items-center gap-1.5"><i class="fas fa-clock text-brand-500"></i>{{ activeQuiz.durationMinutes }} phút</span>
+              </div>
+              <div class="bg-brand-50/50 p-4 rounded-xl border border-brand-100/50 flex flex-col gap-1 items-center justify-center text-center col-span-2 sm:col-span-1">
+                <span class="text-[10px] uppercase font-black tracking-widest text-brand-600">Số lượng câu hỏi</span>
+                <span class="text-slate-800 flex items-center gap-1.5"><i class="fas fa-circle-question text-brand-500"></i>{{ activeQuiz.questions?.length }} câu</span>
+              </div>
+              <div class="bg-brand-50/50 p-4 rounded-xl border border-brand-100/50 flex flex-col gap-1 items-center justify-center text-center col-span-2 sm:col-span-1">
+                <span class="text-[10px] uppercase font-black tracking-widest text-brand-600">Hình thức</span>
+                <span class="text-slate-800 flex items-center gap-1.5">
+                  <i class="fas text-brand-500 mr-1" :class="activeQuiz.quizType === 'multiple_choice' ? 'fa-list-check' : activeQuiz.quizType === 'essay' ? 'fa-file-pen' : 'fa-shuffle'"></i>
+                  {{ activeQuiz.quizType === 'multiple_choice' ? 'Trắc nghiệm' : activeQuiz.quizType === 'essay' ? 'Tự luận' : 'Kết hợp' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Instructions -->
+          <div class="bg-amber-50/70 border border-amber-200/60 rounded-xl p-4 flex gap-3 text-xs font-semibold text-amber-800 shadow-inner text-left">
+            <i class="fas fa-circle-info text-amber-500 text-base flex-shrink-0 mt-0.5"></i>
+            <div>
+              <p class="font-extrabold text-amber-900">Hướng dẫn & Lưu ý:</p>
+              <p class="mt-1 leading-relaxed text-amber-700">Khi bạn nhấn nút "Bắt đầu làm bài", đồng hồ đếm ngược mới bắt đầu tính giờ làm bài. Hãy đảm bảo bạn đã sẵn sàng tập trung.</p>
+            </div>
+          </div>
+
+          <!-- CTA Buttons -->
+          <div class="flex flex-col sm:flex-row items-center gap-3">
+            <button @click="startQuizSession" class="w-full sm:w-auto flex-1 btn-glossy py-4 px-6 rounded-2xl flex items-center justify-center gap-2 text-lg">
+              <i class="fas fa-play mr-1"></i> Bắt đầu làm bài
+            </button>
+            <button @click="changeView('dashboard')" class="w-full sm:w-auto bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-500 hover:text-slate-700 py-4 px-6 rounded-2xl text-sm font-black transition">
+              Quay lại trang chủ
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- VIEW: ACTIVE QUIZ PLAY SESSION -->
       <div v-if="currentView === 'quiz_session'" class="grid grid-cols-1 lg:grid-cols-12 gap-8 flex-1">
         
@@ -429,10 +493,33 @@
               </div>
 
               <!-- UI for Essay -->
-              <div v-if="activeQuestion.question_type === 'essay'" class="flex flex-col gap-5 flex-1">
+              <div v-if="activeQuestion.question_type === 'essay'" class="flex flex-col gap-4 flex-1">
                 <textarea v-model="sessionAnswers[activeQuestion.id].draftText" 
-                          class="w-full p-5 rounded-2xl bg-white/80 border-2 border-slate-200 shadow-inner focus:outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 text-base flex-1 min-h-[200px] resize-none text-slate-800 font-medium transition-all"
+                          class="w-full p-5 rounded-2xl bg-white/80 border-2 border-slate-200 shadow-inner focus:outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 text-base flex-1 min-h-[160px] resize-none text-slate-800 font-medium transition-all"
                           placeholder="Viết câu trả lời tự luận chi tiết tại đây... (Nội dung sẽ được lưu tự động)"></textarea>
+                
+                <div class="flex flex-col gap-3 p-4 rounded-xl border border-dashed border-brand-300 bg-brand-50/50">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-sm font-bold text-brand-700">
+                      <i class="fas fa-camera"></i>
+                      <span>Hoặc tải lên ảnh bài giải viết tay</span>
+                    </div>
+                    <div>
+                      <input type="file" accept="image/*" class="hidden" :id="'essay-image-' + activeQuestion.id" @change="handleEssayImageUpload($event, activeQuestion.id)">
+                      <label :for="'essay-image-' + activeQuestion.id" class="cursor-pointer bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm flex items-center">
+                        <i class="fas fa-upload mr-2"></i> Chọn ảnh
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <!-- Image Preview -->
+                  <div v-if="sessionAnswers[activeQuestion.id]?.imageData" class="relative inline-block mt-2 self-start rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm">
+                    <img :src="`data:${sessionAnswers[activeQuestion.id].imageData.mimeType};base64,${sessionAnswers[activeQuestion.id].imageData.data}`" class="h-32 object-contain bg-white">
+                    <button @click="removeEssayImage(activeQuestion.id)" class="absolute top-1 right-1 w-6 h-6 bg-red-500/90 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md transition" title="Xóa ảnh">
+                      <i class="fas fa-times text-xs"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
 
             </div>
@@ -646,14 +733,18 @@
               <div class="bg-white border-2 border-slate-100 shadow-sm rounded-2xl p-6 relative overflow-hidden">
                 <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-slate-300"></div>
                 <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center"><i class="fas fa-user-edit mr-2"></i> Bài nộp của học sinh</h4>
-                <p class="text-base text-slate-800 font-medium leading-relaxed whitespace-pre-wrap italic">"{{ getStudentEssayAnswer(question.id) || '(Không có câu trả lời)' }}"</p>
+                <p v-if="getStudentEssayAnswer(question.id)" class="text-base text-slate-800 font-medium leading-relaxed whitespace-pre-wrap italic mb-2">"{{ getStudentEssayAnswer(question.id) }}"</p>
+                <div v-if="gradingResult.details[question.id]?.image_data" class="mt-2 border-2 border-slate-200 rounded-xl overflow-hidden inline-block shadow-sm">
+                  <img :src="`data:${gradingResult.details[question.id].image_data.mimeType};base64,${gradingResult.details[question.id].image_data.data}`" class="max-h-64 object-contain bg-slate-50">
+                </div>
+                <p v-if="!getStudentEssayAnswer(question.id) && !gradingResult.details[question.id]?.image_data" class="text-base text-slate-500 font-medium italic">"(Không có dữ liệu)"</p>
               </div>
 
               <!-- AI Feedback and Assessment -->
               <div class="bg-gradient-to-r from-brand-50 to-emerald-50 border-2 border-brand-200 shadow-md rounded-2xl p-6 relative overflow-hidden" v-if="gradingResult.details[question.id]?.ai_feedback">
                 <div class="absolute right-0 top-0 text-brand-500/10 text-8xl -mt-6 -mr-4 pointer-events-none"><i class="fas fa-robot"></i></div>
                 <div class="flex items-center gap-2 text-brand-800 font-black text-sm mb-3 uppercase tracking-wider relative z-10">
-                  <i class="fas fa-sparkles text-brand-500 text-lg"></i> Nhận xét chi tiết từ AI
+                  <i class="fas fa-sparkles text-brand-500 text-lg"></i> Đánh giá của AI
                 </div>
                 <p class="text-sm text-slate-800 font-semibold leading-relaxed relative z-10">{{ gradingResult.details[question.id].ai_feedback }}</p>
               </div>
@@ -661,7 +752,7 @@
               <!-- Essay References -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
                 <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                  <h4 class="font-black text-slate-500 mb-3 text-xs uppercase tracking-widest"><i class="fas fa-check-double text-green-500 mr-1.5"></i> Đáp án tham chiếu chuẩn</h4>
+                  <h4 class="font-black text-slate-500 mb-3 text-xs uppercase tracking-widest"><i class="fas fa-check-double text-green-500 mr-1.5"></i> Hướng dẫn giải chi tiết</h4>
                   <p class="text-slate-700 font-semibold leading-relaxed bg-slate-50 p-3 rounded-xl whitespace-pre-line">{{ question.correct_answer }}</p>
                 </div>
                 <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
@@ -932,6 +1023,7 @@
         const sessionAnswers = ref({});
         const isGenerating = ref(false);
         const generatingStatus = ref('');
+        const isGrading = ref(false);
 
         // Timer
         const timerSeconds = ref(0);
@@ -1173,7 +1265,7 @@ ${rawText.slice(0, 8000)}
 - Môn học: ${config.value.subject === 'Tự động phát hiện' ? 'Tự nhận diện' : config.value.subject}
 
 Yêu cầu đầu ra (Output JSON format):
-Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần giải thích hãy viết đầy đủ nội dung lời giải đã chắt lọc ở trên, cấu trúc như sau:
+Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ. Để sinh đề nhanh nhất và tránh bị quá tải, phần giải thích ('explanation') hãy viết ngắn gọn, súc tích tập trung vào trọng tâm (khoảng 1-3 câu), chỉ viết chi tiết khi tài liệu gốc có sẵn phần hướng dẫn lời giải/đáp án của câu hỏi đó. Cấu trúc như sau:
 {
   "subject": "Tên môn học tự nhận diện",
   "questions": [
@@ -1247,7 +1339,7 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
 
             saveQuizToDB(activeQuiz.value);
             showToast('Khởi tạo bài thi thành công!', 'success');
-            startQuizSession();
+            prepareQuizSession();
 
           } catch (err) {
             console.error(err);
@@ -1258,7 +1350,7 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
         }
 
         // Generic Caller for AI (Gemini / OpenAI) with Retry Logic
-        async function callAiAPI(promptText, isJson = false) {
+        async function callAiAPI(promptText, isJson = false, imageParts = null) {
           const provider = settings.value.provider;
           const apiKey = settings.value.apiKey;
           const model = settings.value.model;
@@ -1268,8 +1360,12 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
             try {
               if (provider === 'gemini') {
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                let parts = [{ text: promptText }];
+                if (imageParts && imageParts.length > 0) {
+                  parts = parts.concat(imageParts);
+                }
                 const requestBody = {
-                  contents: [{ parts: [{ text: promptText }] }],
+                  contents: [{ parts: parts }],
                   generationConfig: {
                     temperature: 0.5,
                     ...(isJson ? { responseMimeType: "application/json" } : {}),
@@ -1293,9 +1389,18 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
               } 
               else {
                 const url = `https://api.openai.com/v1/chat/completions`;
+                let content = [{ type: 'text', text: promptText }];
+                if (imageParts && imageParts.length > 0) {
+                  imageParts.forEach(img => {
+                    content.push({
+                      type: 'image_url',
+                      image_url: { url: `data:${img.inlineData.mimeType};base64,${img.inlineData.data}` }
+                    });
+                  });
+                }
                 const requestBody = {
                   model: model,
-                  messages: [{ role: 'user', content: promptText }],
+                  messages: [{ role: 'user', content: content }],
                   response_format: isJson ? { type: "json_object" } : undefined,
                   temperature: 0.5,
                   max_tokens: 4096
@@ -1331,7 +1436,11 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
                   waitTime = (parseFloat(retryMatch[1]) + 0.5) * 1000; // Cộng thêm 0.5s dư dả
                 }
                 
-                generatingStatus.value = `AI đang khởi tạo...`;
+                if (isGrading.value) {
+                  generatingStatus.value = `AI đang chấm...`;
+                } else {
+                  generatingStatus.value = `AI đang khởi tạo...`;
+                }
                 await new Promise(resolve => setTimeout(resolve, waitTime));
               } else {
                 if (isOverloaded) {
@@ -1356,8 +1465,8 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
           return savedQuizzes.find(q => q.id === quizId);
         }
 
-        // Start playing quiz
-        function startQuizSession() {
+        // Prepare quiz session details without starting the timer (allows preview and start button screen)
+        function prepareQuizSession() {
           activeQuestionIndex.value = 0;
           
           const ans = {};
@@ -1375,6 +1484,18 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
           examStartSeconds = timerSeconds.value;
 
           if (timerInterval) clearInterval(timerInterval);
+
+          currentView.value = 'quiz_preview';
+        }
+
+        // Start playing quiz (starts countdown timer and switches to actual questions panel)
+        function startQuizSession() {
+          if (timerInterval) clearInterval(timerInterval);
+
+          examStartSeconds = activeQuiz.value.durationMinutes * 60;
+          timerSeconds.value = examStartSeconds;
+          timerPercent.value = 100;
+
           timerInterval = setInterval(() => {
             timerSeconds.value--;
             timerPercent.value = (timerSeconds.value / examStartSeconds) * 100;
@@ -1417,7 +1538,7 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
             if (ans.history.length > 0) {
               return ans.attempts >= 3 ? 'bg-green-50 border-green-400 text-green-600' : 'bg-amber-50 border-amber-400 text-amber-600';
             }
-            return ans.draftText.trim() ? 'bg-brand-50 border-brand-400 text-brand-600' : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50';
+            return (ans.draftText.trim() || ans.imageData) ? 'bg-brand-50 border-brand-400 text-brand-600' : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50';
           }
         }
 
@@ -1429,6 +1550,33 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
         function getAttemptCount(qId) { return sessionAnswers.value[qId]?.attempts || 0; }
         function isQuestionLocked(qId) { return sessionAnswers.value[qId]?.locked || false; }
         function getQuestionFeedback(qId) { return sessionAnswers.value[qId]?.feedback || null; }
+
+        function handleEssayImageUpload(event, qId) {
+          const file = event.target.files[0];
+          if (!file) return;
+          if (!file.type.startsWith('image/')) {
+            showToast('Vui lòng chọn một file hình ảnh hợp lệ.', 'error');
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const base64String = e.target.result.split(',')[1];
+            sessionAnswers.value[qId].imageData = {
+              mimeType: file.type,
+              data: base64String
+            };
+            showToast('Đã tải ảnh lên thành công', 'success');
+          };
+          reader.readAsDataURL(file);
+          // reset input so same file can be uploaded again if removed
+          event.target.value = '';
+        }
+
+        function removeEssayImage(qId) {
+          if (sessionAnswers.value[qId]) {
+            sessionAnswers.value[qId].imageData = null;
+          }
+        }
 
         function checkMultipleChoiceAnswer(qId) {
           const ans = sessionAnswers.value[qId];
@@ -1480,11 +1628,13 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
           if (!ans || !question || ans.locked || ans.attempts >= 3) return;
 
           const text = ans.draftText.trim();
-          if (!text) return;
+          const imgData = ans.imageData;
+          if (!text && !imgData) return;
 
           // Tránh gửi chấm lặp nếu không có thay đổi so với bản nháp cuối cùng
           const lastHistoryItem = ans.history.length > 0 ? ans.history[ans.history.length - 1].text : '';
-          if (text === lastHistoryItem) return;
+          const lastHistoryImg = ans.history.length > 0 ? ans.history[ans.history.length - 1].hasImage : false;
+          if (text === lastHistoryItem && !!imgData === lastHistoryImg) return;
 
           ans.attempts++;
           const now = new Date();
@@ -1495,19 +1645,19 @@ Trả về dữ liệu dạng JSON nguyên bản, ưu tiên TỐC ĐỘ, phần 
           try {
             const gradePrompt = `Context: Bạn là giám khảo chấm thi bài tự luận.
 Task: Hãy so sánh "Câu trả lời của học sinh" với "Đáp án gợi ý" dựa trên "Câu hỏi" để kiểm tra xem câu trả lời của học sinh có ĐỦ Ý và CHÍNH XÁC (tương ứng với tối thiểu 80% điểm số hoặc đạt yêu cầu) để được coi là ĐÚNG hay không.
-Hãy phản hồi cực kỳ ngắn gọn, không giải thích dài dòng.
+Chỉ trả về định dạng JSON, không giải thích gì thêm.
 
 Câu hỏi: ${question.question_text}
 Đáp án mẫu: ${question.correct_answer}
-Câu trả lời của học sinh: ${text}
+Câu trả lời của học sinh: ${text || '(Chỉ nộp hình ảnh đính kèm)'}
 
 Định dạng trả về JSON bắt buộc:
 {
-  "correct": true, // true nếu câu trả lời đã chính xác và đầy đủ ý cơ bản, false nếu chưa đạt yêu cầu
-  "feedback": "Một câu nhận xét rất ngắn gọn (tối đa 2 câu) để học sinh biết họ thiếu hoặc sai gì, tuyệt đối không tiết lộ đáp án mẫu."
+  "correct": true // true nếu đúng, false nếu sai
 }`;
 
-            const response = await callAiAPI(gradePrompt, true, []);
+            const imageParts = imgData ? [{ inlineData: { mimeType: imgData.mimeType, data: imgData.data } }] : null;
+            const response = await callAiAPI(gradePrompt, true, imageParts);
             let cleanRes = response.trim();
             if (cleanRes.startsWith('```json')) cleanRes = cleanRes.slice(7);
             if (cleanRes.endsWith('```')) cleanRes = cleanRes.slice(0, -3);
@@ -1515,9 +1665,9 @@ Câu trả lời của học sinh: ${text}
 
             const parsedGrading = JSON.parse(cleanRes);
             const isCorrect = parsedGrading.correct === true;
-            const feedbackText = parsedGrading.feedback || 'Chưa đạt yêu cầu.';
+            const feedbackText = isCorrect ? 'Đáp án hoàn toàn chính xác.' : 'Chưa đạt yêu cầu so với đáp án mẫu.';
 
-            ans.history.push({ text: text, timestamp: timestamp, feedback: feedbackText, correct: isCorrect });
+            ans.history.push({ text: text, timestamp: timestamp, feedback: feedbackText, correct: isCorrect, hasImage: !!imgData });
 
             if (isCorrect) {
               ans.feedback = { correct: true, message: 'Hoàn toàn chính xác!' };
@@ -1554,7 +1704,7 @@ Câu trả lời của học sinh: ${text}
             if (q.question_type === 'multiple_choice') {
               if (!ans.locked && !ans.selectedOption) unanswered++;
             } else {
-              if (ans.history.length === 0 && !ans.draftText.trim()) unanswered++;
+              if (ans.history.length === 0 && !ans.draftText.trim() && !ans.imageData) unanswered++;
             }
           });
 
@@ -1570,173 +1720,186 @@ Câu trả lời của học sinh: ${text}
           Object.keys(sessionAnswers.value).forEach(qId => {
             const ans = sessionAnswers.value[qId];
             ans.locked = true;
-            if (ans.draftText && ans.draftText.trim() && ans.history.length === 0) {
+            if ((ans.draftText?.trim() || ans.imageData) && ans.history.length === 0) {
               const now = new Date();
               const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
               ans.attempts = 1;
-              ans.history.push({ text: ans.draftText.trim(), timestamp: timestamp });
+              ans.history.push({ text: ans.draftText?.trim() || '', timestamp: timestamp, hasImage: !!ans.imageData });
             }
           });
           submitQuizAndGrade();
         }
 
         async function submitQuizAndGrade() {
-          if (timerInterval) clearInterval(timerInterval);
+          isGrading.value = true;
+          try {
+            if (timerInterval) clearInterval(timerInterval);
 
-          isGenerating.value = true;
-          generatingStatus.value = 'AI đang tổng hợp và đánh giá kết quả...';
-          currentView.value = 'dashboard';
+            isGenerating.value = true;
+            generatingStatus.value = 'Đang chấm bài...';
+            currentView.value = 'dashboard';
 
-          const timeSpentSeconds = examStartSeconds - timerSeconds.value;
-          const attemptId = 'attempt_' + Date.now();
-          
-          const details = {};
-          let totalScore = 0;
-          let maxExamScore = 0;
+            const timeSpentSeconds = examStartSeconds - timerSeconds.value;
+            const attemptId = 'attempt_' + Date.now();
+            
+            const details = {};
+            let totalScore = 0;
+            let maxExamScore = 0;
 
-          const essaysToGrade = [];
+            const essaysToGrade = [];
 
-          activeQuiz.value.questions.forEach(q => {
-            maxExamScore += q.max_score;
-            const ans = sessionAnswers.value[q.id];
+            activeQuiz.value.questions.forEach(q => {
+              maxExamScore += q.max_score;
+              const ans = sessionAnswers.value[q.id];
 
-            if (q.question_type === 'multiple_choice') {
-              let score = 0;
-              if (ans.selectedOption === q.correct_answer) {
-                score = q.max_score;
+              if (q.question_type === 'multiple_choice') {
+                let score = 0;
+                if (ans.selectedOption === q.correct_answer) {
+                  score = q.max_score;
+                }
+                totalScore += score;
+
+                const historyArray = [];
+                if (ans.selectedOption) {
+                  historyArray.push({ selected: ans.selectedOption, correct: ans.selectedOption === q.correct_answer });
+                }
+                details[q.id] = {
+                  question_type: 'multiple_choice',
+                  answers_history: historyArray,
+                  final_score: score,
+                  ai_feedback: score === q.max_score ? 'Lựa chọn chính xác hoàn toàn.' : 'Bạn đã chọn sai đáp án.'
+                };
+              } 
+              else {
+                let studentAnswerText = '';
+                const imgData = ans.imageData;
+                if (ans.history.length > 0) {
+                  studentAnswerText = ans.history[ans.history.length - 1].text;
+                } else if (ans.draftText.trim()) {
+                  studentAnswerText = ans.draftText.trim();
+                  ans.history.push({ text: studentAnswerText, timestamp: 'Tự động', hasImage: !!imgData });
+                }
+
+                essaysToGrade.push({
+                  id: q.id,
+                  question_text: q.question_text,
+                  correct_answer: q.correct_answer,
+                  rubric: q.rubric,
+                  max_score: q.max_score,
+                  student_answer: studentAnswerText,
+                  image_data: imgData
+                });
+
+                details[q.id] = {
+                  question_type: 'essay',
+                  answers_history: ans.history.map(h => ({ selected: h.text, correct: null })),
+                  final_score: 0,
+                  ai_feedback: 'Đang đợi phân tích...',
+                  image_data: imgData
+                };
               }
-              totalScore += score;
+            });
 
-              const historyArray = [];
-              if (ans.selectedOption) {
-                historyArray.push({ selected: ans.selectedOption, correct: ans.selectedOption === q.correct_answer });
-              }
-              details[q.id] = {
-                question_type: 'multiple_choice',
-                answers_history: historyArray,
-                final_score: score,
-                ai_feedback: score === q.max_score ? 'Lựa chọn chính xác hoàn toàn.' : 'Bạn đã chọn sai đáp án.'
-              };
-            } 
-            else {
-              let studentAnswerText = '';
-              if (ans.history.length > 0) {
-                studentAnswerText = ans.history[ans.history.length - 1].text;
-              } else if (ans.draftText.trim()) {
-                studentAnswerText = ans.draftText.trim();
-                ans.history.push({ text: studentAnswerText, timestamp: 'Tự động' });
-              }
+            if (essaysToGrade.length > 0) {
+              for (let i = 0; i < essaysToGrade.length; i++) {
+                const essay = essaysToGrade[i];
+                generatingStatus.value = `Đang chấm bài ${i + 1}/${essaysToGrade.length}...`;
 
-              essaysToGrade.push({
-                id: q.id,
-                question_text: q.question_text,
-                correct_answer: q.correct_answer,
-                rubric: q.rubric,
-                max_score: q.max_score,
-                student_answer: studentAnswerText
-              });
+                if (!essay.student_answer.trim() && !essay.image_data) {
+                  details[essay.id].final_score = 0;
+                  details[essay.id].ai_feedback = 'Học sinh bỏ trống, không có dữ liệu để chấm.';
+                  continue;
+                }
 
-              details[q.id] = {
-                question_type: 'essay',
-                answers_history: ans.history.map(h => ({ selected: h.text, correct: null })),
-                final_score: 0,
-                ai_feedback: 'Đang đợi phân tích...'
-              };
-            }
-          });
-
-          if (essaysToGrade.length > 0) {
-            for (let i = 0; i < essaysToGrade.length; i++) {
-              const essay = essaysToGrade[i];
-              generatingStatus.value = `AI đang đọc và chấm tự luận ${i + 1}/${essaysToGrade.length}...`;
-
-              if (!essay.student_answer.trim()) {
-                details[essay.id].final_score = 0;
-                details[essay.id].ai_feedback = 'Học sinh bỏ trống, không có dữ liệu để chấm.';
-                continue;
-              }
-
-              try {
-                const gradePrompt = `Context: Bạn là giám khảo chấm thi bài tự luận.
+                try {
+                  const gradePrompt = `Context: Bạn là giám khảo chấm thi bài tự luận.
 Task: Hãy so sánh "Câu trả lời của học sinh" với "Đáp án gợi ý" dựa trên "Câu hỏi" để chấm điểm và đưa ra nhận xét.
 
 Câu hỏi: ${essay.question_text}
 Đáp án gợi ý của hệ thống: ${essay.correct_answer}
-Câu trả lời của học sinh (Lượt trả lời cuối cùng): ${essay.student_answer}
+Câu trả lời của học sinh (Bao gồm văn bản và hình ảnh đính kèm nếu có): ${essay.student_answer || '(Chỉ nộp hình ảnh đính kèm)'}
 
 Yêu cầu đầu ra:
 Hãy chấm điểm trên thang điểm 10. Đối với phần nhận xét (feedback), tuyệt đối KHÔNG viết văn dài dòng hay lời an ủi/khen ngợi (ví dụ: "Bài làm của em có cố gắng..."). Chỉ cần cung cấp TRỰC TIẾP cách giải ngắn gọn và đáp án cuối cùng. Trả về định dạng JSON:
 {
   "score": 8.5,
-  "feedback": "Cách giải: ... \n Đáp án: ..."
+  "feedback": "Cách giải: ... \\n Đáp án: ..."
 }`;
-                
-                const response = await callAiAPI(gradePrompt, true);
-                
-                let cleanRes = response.trim();
-                if (cleanRes.startsWith('```json')) cleanRes = cleanRes.slice(7);
-                if (cleanRes.endsWith('```')) cleanRes = cleanRes.slice(0, -3);
-                cleanRes = cleanRes.trim();
+                  
+                  const imageParts = essay.image_data ? [{ inlineData: { mimeType: essay.image_data.mimeType, data: essay.image_data.data } }] : null;
+                  const response = await callAiAPI(gradePrompt, true, imageParts);
+                  
+                  let cleanRes = response.trim();
+                  if (cleanRes.startsWith('```json')) cleanRes = cleanRes.slice(7);
+                  if (cleanRes.endsWith('```')) cleanRes = cleanRes.slice(0, -3);
+                  cleanRes = cleanRes.trim();
 
-                const parsedGrading = JSON.parse(cleanRes);
-                const aiScoreOutOf10 = parseFloat(parsedGrading.score) || 0;
-                
-                // Chuẩn hóa điểm từ thang 10 của AI về thang điểm tối đa của câu hỏi này
-                const normalizedScore = (aiScoreOutOf10 / 10) * essay.max_score;
-                details[essay.id].final_score = Math.min(normalizedScore, essay.max_score);
-                details[essay.id].ai_feedback = parsedGrading.feedback || 'Không có nhận xét chi tiết.';
-                totalScore += details[essay.id].final_score;
+                  const parsedGrading = JSON.parse(cleanRes);
+                  const aiScoreOutOf10 = parseFloat(parsedGrading.score) || 0;
+                  
+                  // Chuẩn hóa điểm từ thang 10 của AI về thang điểm tối đa của câu hỏi này
+                  const normalizedScore = (aiScoreOutOf10 / 10) * essay.max_score;
+                  details[essay.id].final_score = Math.min(normalizedScore, essay.max_score);
+                  details[essay.id].ai_feedback = normalizedScore === essay.max_score ? 'Đạt điểm tối đa.' : (normalizedScore > 0 ? 'Chưa hoàn thiện hoàn toàn.' : 'Chưa đạt yêu cầu.');
+                  totalScore += details[essay.id].final_score;
 
-              } catch (err) {
-                details[essay.id].final_score = 0;
-                details[essay.id].ai_feedback = 'Lỗi kết nối AI khi chấm điểm: ' + err.message;
+                } catch (err) {
+                  details[essay.id].final_score = 0;
+                  details[essay.id].ai_feedback = 'Lỗi kết nối AI khi chấm điểm: ' + err.message;
+                }
               }
             }
+
+            let finalNormalizedScore = totalScore;
+            if (maxExamScore !== 10 && maxExamScore > 0) {
+              finalNormalizedScore = (totalScore / maxExamScore) * 10;
+            }
+
+            let mcCount = 0;
+            let essayCount = 0;
+            activeQuiz.value.questions.forEach(q => {
+              if (q.question_type === 'multiple_choice') mcCount++;
+              else essayCount++;
+            });
+
+            const now = new Date();
+            gradingResult.value = {
+              attemptId: attemptId,
+              quizId: activeQuiz.value.id,
+              quizTitle: activeQuiz.value.title,
+              quizSubject: activeQuiz.value.subject,
+              quizType: activeQuiz.value.quizType,
+              score: Math.min(Math.max(finalNormalizedScore, 0), 10),
+              timeSpentSeconds: timeSpentSeconds,
+              timeLimitMinutes: Math.round(examStartSeconds / 60),
+              mcCount: mcCount,
+              essayCount: essayCount,
+              submittedAt: now.toISOString(),
+              details: details
+            };
+
+            quizHistory.value.unshift(gradingResult.value);
+            localStorage.setItem('smart_quiz_history', JSON.stringify(quizHistory.value));
+
+            showToast('Đánh giá hoàn tất. Xin mời xem kết quả!', 'success');
+            isGenerating.value = false;
+            currentView.value = 'grading_report';
+          } catch (e) {
+            console.error(e);
+            showToast('Lỗi khi chấm bài thi: ' + e.message, 'error');
+            isGenerating.value = false;
+          } finally {
+            isGrading.value = false;
           }
-
-          let finalNormalizedScore = totalScore;
-          if (maxExamScore !== 10 && maxExamScore > 0) {
-            finalNormalizedScore = (totalScore / maxExamScore) * 10;
-          }
-
-          let mcCount = 0;
-          let essayCount = 0;
-          activeQuiz.value.questions.forEach(q => {
-            if (q.question_type === 'multiple_choice') mcCount++;
-            else essayCount++;
-          });
-
-          const now = new Date();
-          gradingResult.value = {
-            attemptId: attemptId,
-            quizId: activeQuiz.value.id,
-            quizTitle: activeQuiz.value.title,
-            quizSubject: activeQuiz.value.subject,
-            quizType: activeQuiz.value.quizType,
-            score: Math.min(Math.max(finalNormalizedScore, 0), 10),
-            timeSpentSeconds: timeSpentSeconds,
-            timeLimitMinutes: Math.round(examStartSeconds / 60),
-            mcCount: mcCount,
-            essayCount: essayCount,
-            submittedAt: now.toISOString(),
-            details: details
-          };
-
-          quizHistory.value.unshift(gradingResult.value);
-          localStorage.setItem('smart_quiz_history', JSON.stringify(quizHistory.value));
-
-          showToast('Đánh giá hoàn tất. Xin mời xem kết quả!', 'success');
-          isGenerating.value = false;
-          currentView.value = 'grading_report';
         }
 
-        function restartQuiz() { startQuizSession(); }
+        function restartQuiz() { prepareQuizSession(); }
 
         function retryQuizFromHistory(quizId) {
           const quiz = getQuizFromDB(quizId);
           if (quiz) {
             activeQuiz.value = quiz;
-            startQuizSession();
+            prepareQuizSession();
             showToast(`Mở bài thi: ${quiz.title}`, 'info');
           } else {
             showToast('Lỗi: Đề thi gốc có thể đã bị xóa khỏi thiết bị!', 'error');
@@ -1885,10 +2048,12 @@ Hãy chấm điểm trên thang điểm 10. Đối với phần nhận xét (fee
           clearFile, generateQuiz, selectOption, getSelectedOption, getAttemptCount,
           isQuestionLocked, getQuestionFeedback, checkMultipleChoiceAnswer, checkEssayAnswer, submitEssayDraft, canMoveToNext, canJumpTo,
           confirmSubmitQuiz, restartQuiz, retryQuizFromHistory, viewPastResult, clearAllHistory, deleteHistoryItem,
+          prepareQuizSession, startQuizSession,
           getBubbleClass, prevQuestion, nextQuestion, countMultipleChoice, countCorrectMultipleChoice,
           sumEssayScore, maxEssayScore, getQuestionScore, getSelectedOptionInReport,
           getStudentEssayAnswer, getHistorySubjects, formatTimer, formatDuration, formatDate,
-          formatScore, getRatingText, getRatingClass, getRatingGradient
+          formatScore, getRatingText, getRatingClass, getRatingGradient,
+          handleEssayImageUpload, removeEssayImage
         };
       }
     }).mount('#app');

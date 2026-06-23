@@ -180,8 +180,10 @@ Yêu cầu đề thi:
 - Nội dung câu hỏi phải bám sát kiến thức cốt lõi, khái niệm, công thức hoặc dữ kiện trong tài liệu. Tránh các câu hỏi quá chung chung hoặc không có trong tài liệu.
 - Đối với trắc nghiệm, các phương án nhiễu phải hợp lý và có tính phân loại cao. Chỉ có DUY NHẤT một phương án đúng.
 - Đối với tự luận, phải cung cấp đáp án mẫu (correct_answer) và hướng dẫn chấm điểm (rubric) chi tiết để AI chấm điểm sau này. Điểm tối đa mỗi câu hỏi nên chia đều sao cho tổng điểm tối đa của toàn bài là 10. Điền điểm tối đa cho mỗi câu vào trường "max_score" (ví dụ: 10 điểm cho 5 câu thì mỗi câu max_score=2.0).
+- Để tối ưu hóa tốc độ sinh đề và tránh bị lỗi timeout/giới hạn khi tạo nhiều câu hỏi (như 10 câu), phần giải thích ('explanation') hãy viết NGẮN GỌN và TRỌNG TÂM (khoảng 1-3 câu), chỉ viết chi tiết khi tài liệu gốc có sẵn hướng dẫn giải chi tiết cho câu hỏi đó.
 
 Bạn BẮT BUỘC phải trả về kết quả dưới định dạng JSON duy nhất tuân thủ cấu trúc Schema dưới đây. Không thêm bất kỳ văn bản giải thích nào ngoài khối JSON.
+
 
 JSON Schema:
 {{
