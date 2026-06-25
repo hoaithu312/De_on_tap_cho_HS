@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PDF Text Extractor</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+    #output { white-space: pre-wrap; background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; line-height: 1.6; }
+    h1 { color: #333; }
+    .page-header { color: blue; font-weight: bold; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>PDF Text Extractor</h1>
+  <p>Đang trích xuất nội dung từ: Đề ôn thi CLC Cầu Giấy (Đề 2).pdf</p>
+  <div id="output">Đang xử lý...</div>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    
+    async function extractText() {
+      const output = document.getElementById('output');
+      try {
+        const pdf = await pdfjsLib.getDocument('Đề ôn thi CLC Cầu Giấy (Đề 2).pdf').promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += `\n=== TRANG ${i} ===\n${pageText}\n`;
+        }
+        output.textContent = fullText || '(PDF này không có text layer - chỉ chứa hình ảnh)';
+      } catch(e) {
+        output.textContent = 'Lỗi: ' + e.message;
+      }
+    }
+    extractText();
+  </script>
+</body>
+</html>
